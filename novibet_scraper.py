@@ -55,16 +55,29 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 BOOKMAKER = "novibet"
 
-# Try both English and Greek slugs; the scraper will try them in order
+# ── COMPETITION TARGET ────────────────────────────────────────────────────────
+# Uncomment the league you want and comment out the rest.
+# Novibet URLs often contain numeric category IDs — if a URL 404s, browse the
+# site, navigate to the competition, and copy the URL from the address bar.
+
 DIRECT_URLS = [
-    "https://www.novibet.gr/stoixima/podosfairo/4372606/greece/super-league-1/5909217"
+    "https://www.novibet.gr/stoixima/podosfairo/champions-league",        # Champions League (verify path)
+    "https://www.novibet.gr/stoixima/podosfairo/uefa-champions-league",   # alt slug
 ]
-# "https://www.novibet.gr/sports/football/greece/super-league-1",
-#     "https://www.novibet.gr/sports/football/greece/super-league",
-#     "https://www.novibet.gr/sports/podosfairo/ellada/super-league-1",
-#     "https://www.novibet.gr/stixima/podosfairo/ellada/super-league-1",
-MAIN_URL    = "https://www.novibet.gr/"
-COUPON_URL  = "https://www.novibet.gr/sports/daily-coupon"
+
+# Super League 1 (Greece)
+# DIRECT_URLS = [
+#     "https://www.novibet.gr/stoixima/podosfairo/4372606/greece/super-league-1/5909217"
+# ]
+
+# Ligue 1 (France) — find the numeric IDs from the address bar
+# DIRECT_URLS = [
+#     "https://www.novibet.gr/stoixima/podosfairo/france/ligue-1",
+# ]
+# ─────────────────────────────────────────────────────────────────────────────
+
+MAIN_URL   = "https://www.novibet.gr/"
+COUPON_URL = "https://www.novibet.gr/sports/daily-coupon"
 
 logger = logging.getLogger(__name__)
 
@@ -99,11 +112,26 @@ _NOISE = frozenset({
     "markets are not available",
 })
 
-# Championship-group keywords that identify Super League 1
-_SUPER_LEAGUE_KEYWORDS = frozenset({
-    "super league 1", "super league", "super-league", "superleague",
-    "ελλάδα", "αγγλία",  # "Ελλάδα" appears before "Super League 1"
+# ── COUPON FILTER KEYWORDS ───────────────────────────────────────────────────
+# These are matched against championship-group headers in the daily coupon
+# fallback.  Update when you change DIRECT_URLS above.
+
+_TARGET_KEYWORDS = frozenset({
+    "champions league", "champion's league", "champions-league",
+    "uefa champions", "τσάμπιονς λιγκ",  # Greek transliteration
 })
+
+# Super League 1 (Greece)
+# _TARGET_KEYWORDS = frozenset({
+#     "super league 1", "super league", "super-league", "superleague",
+#     "ελλάδα",
+# })
+
+# Ligue 1 (France)
+# _TARGET_KEYWORDS = frozenset({
+#     "ligue 1", "ligue1", "γαλλία", "france",
+# })
+# ─────────────────────────────────────────────────────────────────────────────
 
 
 # ---------------------------------------------------------------------------
@@ -328,10 +356,9 @@ def _parse_coupon_text(text: str) -> list[tuple]:
     # Group headers appear as lines that don't match odds/time/team patterns
     lines = [l.strip() for l in text.split("\n") if l.strip()]
 
-    # Find Super League 1 sections
-    # Strategy: locate indices where "Super League 1" (or variant) appears,
-    # then collect the block until the next championship header
-    in_super_league = False
+    # Find the target competition section by matching _TARGET_KEYWORDS
+    # against championship-group header lines.
+    in_target = False
     block_lines: list[str] = []
 
     championship_re = re.compile(
@@ -343,30 +370,25 @@ def _parse_coupon_text(text: str) -> list[tuple]:
 
         # Detect championship header
         if championship_re.match(line) and not _ODDS_RE.match(line) and not _TIME_RE.match(line):
-            # Flush previous block if it was Super League
-            if in_super_league and block_lines:
+            # Flush previous block if it matched our target competition
+            if in_target and block_lines:
                 rows.extend(_parse_coupon_block(block_lines, today))
                 block_lines = []
-            # Check if this header is Super League
-            in_super_league = (
-                "super league" in low and
-                # exclude non-Greek leagues: "English Super League" etc.
-                ("ελλάδα" in low or "greece" in low or
-                 "super league 1" in low or "ελλ" in low)
-            )
+            # Check if this header matches our target competition
+            in_target = any(kw in low for kw in _TARGET_KEYWORDS)
             continue
 
-        # Also detect "Super League 1" on its own line (some sites split the header)
-        if "super league 1" in low and not _ODDS_RE.match(line):
-            in_super_league = True
+        # Also detect competition name on its own line (some sites split the header)
+        if any(kw in low for kw in _TARGET_KEYWORDS) and not _ODDS_RE.match(line):
+            in_target = True
             block_lines = []
             continue
 
-        if in_super_league:
+        if in_target:
             block_lines.append(line)
 
     # Flush last block
-    if in_super_league and block_lines:
+    if in_target and block_lines:
         rows.extend(_parse_coupon_block(block_lines, today))
 
     return rows

@@ -30,10 +30,19 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 BOOKMAKER = "stoiximan"
-SUPER_LEAGUE_URL = (
-    "https://en.stoiximan.gr/sport/soccer/greece/stoiximan-super-league/1636/"
-)
-# "https://www.stoiximan.gr/sports/podosfairo/ellada/super-league-1/"
+
+# ── COMPETITION TARGET ────────────────────────────────────────────────────────
+# Uncomment the league you want and comment out the rest.
+# Tip: if the URL below 404s, browse the site manually, navigate to the
+#      competition, and copy the URL straight from the address bar.
+
+TARGET_URL = "https://en.stoiximan.gr/sport/soccer/europe/uefa-champions-league/"
+
+# TARGET_URL = "https://en.stoiximan.gr/sport/soccer/greece/stoiximan-super-league/1636/"  # Super League 1
+# TARGET_URL = "https://en.stoiximan.gr/sport/soccer/france/ligue-1/"                      # Ligue 1
+# TARGET_URL = "https://en.stoiximan.gr/sport/soccer/england/premier-league/"              # Premier League
+# ─────────────────────────────────────────────────────────────────────────────
+
 logger = logging.getLogger(__name__)
 
 # --- regex helpers ---
@@ -366,7 +375,7 @@ def _parse_lines(lines: list[str]) -> list[tuple]:
 
 def scrape(driver: uc.Chrome | None = None) -> list[tuple]:
     """
-    Scrape Super League 1 odds from Stoiximan.
+    Scrape odds from the competition set in TARGET_URL.
     Returns a list of rows ready for db.insert_odds().
     Pass an existing driver to reuse it; otherwise a new one is created
     and closed after this call.
@@ -377,8 +386,8 @@ def scrape(driver: uc.Chrome | None = None) -> list[tuple]:
 
     rows: list[tuple] = []
     try:
-        logger.info("[stoiximan] navigating → %s", SUPER_LEAGUE_URL)
-        driver.get(SUPER_LEAGUE_URL)
+        logger.info("[stoiximan] navigating → %s", TARGET_URL)
+        driver.get(TARGET_URL)
         time.sleep(4)
 
         _dismiss_overlays(driver)
