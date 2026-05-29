@@ -61,8 +61,8 @@ BOOKMAKER = "novibet"
 # site, navigate to the competition, and copy the URL from the address bar.
 
 DIRECT_URLS = [
-    "https://www.novibet.gr/stoixima/podosfairo/champions-league",        # Champions League (verify path)
-    "https://www.novibet.gr/stoixima/podosfairo/uefa-champions-league",   # alt slug
+    "https://www.novibet.gr/stoixima/dimofili/6006809/uefa-champions-league/uefa-champions-league/7075603",
+    
 ]
 
 # Super League 1 (Greece)

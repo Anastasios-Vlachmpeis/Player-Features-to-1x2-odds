@@ -36,7 +36,7 @@ BOOKMAKER = "stoiximan"
 # Tip: if the URL below 404s, browse the site manually, navigate to the
 #      competition, and copy the URL straight from the address bar.
 
-TARGET_URL = "https://en.stoiximan.gr/sport/soccer/europe/uefa-champions-league/"
+TARGET_URL = "https://en.stoiximan.gr/sport/soccer/competitions/champions-league/188566/"
 
 # TARGET_URL = "https://en.stoiximan.gr/sport/soccer/greece/stoiximan-super-league/1636/"  # Super League 1
 # TARGET_URL = "https://en.stoiximan.gr/sport/soccer/france/ligue-1/"                      # Ligue 1

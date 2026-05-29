@@ -506,3 +506,25 @@ Stacktrace:
 2026-05-29 20:44:55,235 [collect_odds] INFO: ─── Novibet ───
 2026-05-29 20:44:57,552 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
 2026-05-29 20:44:57,952 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/stoixima/podosfairo/4372606/greece/super-league-1/5909217
+2026-05-29 20:58:36,284 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:58:36,284 [collect_odds] INFO:   Super League 1 odds collection — start  
+2026-05-29 20:58:36,284 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:58:36,285 [collect_odds] INFO: ─── Stoiximan ───
+2026-05-29 20:58:39,032 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:58:39,426 [stoiximan_scraper] INFO: [stoiximan] navigating → https://en.stoiximan.gr/sport/soccer/competitions/champions-league/188566/
+2026-05-29 21:00:06,930 [stoiximan_scraper] INFO:   content container matched: main
+2026-05-29 21:00:07,128 [stoiximan_scraper] INFO: [stoiximan] raw lines from container: 288
+2026-05-29 21:00:07,129 [stoiximan_scraper] INFO: [stoiximan] parsed 0 match rows
+2026-05-29 21:00:07,129 [stoiximan_scraper] WARNING: [stoiximan] 0 rows — likely stale selectors or page structure change. Check SUPER_LEAGUE_URL and the content container selector in _get_content_text().
+2026-05-29 21:00:07,481 [collect_odds] WARNING: Stoiximan: 0 matches scraped
+2026-05-29 21:00:07,481 [collect_odds] INFO: ─── Novibet ───
+2026-05-29 21:00:09,962 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 21:00:10,369 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/stoixima/dimofili/6006809/uefa-champions-league/uefa-champions-league/7075603
+2026-05-29 21:01:49,280 [novibet_scraper] INFO: [novibet] direct page raw lines: 654
+2026-05-29 21:01:49,281 [novibet_scraper] INFO: [novibet] direct URL yielded 0 matches, trying next
+2026-05-29 21:01:49,281 [novibet_scraper] INFO: [novibet] falling back to daily coupon
+2026-05-29 21:04:05,044 [novibet_scraper] INFO:   daily coupon link not found – navigating directly
+2026-05-29 21:04:12,089 [novibet_scraper] WARNING: [novibet] could not find daily coupon body
+2026-05-29 21:04:12,089 [novibet_scraper] WARNING: [novibet] 0 rows — check DIRECT_URLS list and coupon selectors in novibet_scraper.py. Run with headless=False to watch the browser.
+2026-05-29 21:04:12,594 [collect_odds] WARNING: Novibet: 0 matches scraped
+2026-05-29 21:04:12,594 [collect_odds] INFO: ══ Done. Total rows inserted: 0 ══
