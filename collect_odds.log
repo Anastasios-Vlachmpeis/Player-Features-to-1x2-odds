@@ -1,0 +1,508 @@
+2026-05-29 20:27:06,120 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:27:06,120 [collect_odds] INFO:   Super League 1 odds collection — start  
+2026-05-29 20:27:06,121 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:27:06,133 [collect_odds] INFO: ─── Stoiximan ───
+2026-05-29 20:27:07,326 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:27:10,317 [collect_odds] ERROR: Stoiximan scraper raised: Message: session not created: cannot connect to chrome at 127.0.0.1:56028
+from session not created: This version of ChromeDriver only supports Chrome version 149
+Current browser version is 148.0.7778.216; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x1183283+10543]
+	undetected_chromedriver!GetHandleVerifier [0x11832c4+10584]
+	undetected_chromedriver!(No symbol) [0xf7a6f0]
+	undetected_chromedriver!(No symbol) [0xfb64e2]
+	undetected_chromedriver!(No symbol) [0xfb551c]
+	undetected_chromedriver!(No symbol) [0xfab615]
+	undetected_chromedriver!(No symbol) [0xfab436]
+	undetected_chromedriver!(No symbol) [0xff1d4f]
+	undetected_chromedriver!(No symbol) [0xff1567]
+	undetected_chromedriver!(No symbol) [0xfe5de6]
+	undetected_chromedriver!(No symbol) [0xfb90d9]
+	undetected_chromedriver!(No symbol) [0xfb9ea4]
+	undetected_chromedriver!GetHandleVerifier [0x14061ea+2934aa]
+	undetected_chromedriver!GetHandleVerifier [0x140176d+28ea2d]
+	undetected_chromedriver!GetHandleVerifier [0x14224ab+2af76b]
+	undetected_chromedriver!GetHandleVerifier [0x119c796+29a56]
+	undetected_chromedriver!GetHandleVerifier [0x11a3a1d+30cdd]
+	undetected_chromedriver!GetHandleVerifier [0x118bba8+18e68]
+	undetected_chromedriver!GetHandleVerifier [0x118bd55+19015]
+	undetected_chromedriver!GetHandleVerifier [0x1174c3f+1eff]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+Traceback (most recent call last):
+  File "C:\Users\skous\Super-League-odds-research\collect_odds.py", line 37, in run_scraper
+    rows = scrape_fn()
+           ^^^^^^^^^^^
+  File "C:\Users\skous\Super-League-odds-research\stoiximan_scraper.py", line 376, in scrape
+    driver = make_driver()
+             ^^^^^^^^^^^^^
+  File "C:\Users\skous\Super-League-odds-research\stoiximan_scraper.py", line 89, in make_driver
+    return uc.Chrome(options=opts)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\undetected_chromedriver\__init__.py", line 466, in __init__
+    super(Chrome, self).__init__(
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\chrome\webdriver.py", line 45, in __init__
+    super().__init__(
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\chromium\webdriver.py", line 66, in __init__
+    super().__init__(command_executor=executor, options=self.options)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\common\webdriver.py", line 25, in __init__
+    super().__init__(*args, **kwargs)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 276, in __init__
+    self.start_session(capabilities)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\undetected_chromedriver\__init__.py", line 724, in start_session
+    super(selenium.webdriver.chrome.webdriver.WebDriver, self).start_session(
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 372, in start_session
+    response = self.execute(Command.NEW_SESSION, caps)["value"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 468, in execute
+    self.error_handler.check_response(response)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\errorhandler.py", line 232, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.SessionNotCreatedException: Message: session not created: cannot connect to chrome at 127.0.0.1:56028
+from session not created: This version of ChromeDriver only supports Chrome version 149
+Current browser version is 148.0.7778.216; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x1183283+10543]
+	undetected_chromedriver!GetHandleVerifier [0x11832c4+10584]
+	undetected_chromedriver!(No symbol) [0xf7a6f0]
+	undetected_chromedriver!(No symbol) [0xfb64e2]
+	undetected_chromedriver!(No symbol) [0xfb551c]
+	undetected_chromedriver!(No symbol) [0xfab615]
+	undetected_chromedriver!(No symbol) [0xfab436]
+	undetected_chromedriver!(No symbol) [0xff1d4f]
+	undetected_chromedriver!(No symbol) [0xff1567]
+	undetected_chromedriver!(No symbol) [0xfe5de6]
+	undetected_chromedriver!(No symbol) [0xfb90d9]
+	undetected_chromedriver!(No symbol) [0xfb9ea4]
+	undetected_chromedriver!GetHandleVerifier [0x14061ea+2934aa]
+	undetected_chromedriver!GetHandleVerifier [0x140176d+28ea2d]
+	undetected_chromedriver!GetHandleVerifier [0x14224ab+2af76b]
+	undetected_chromedriver!GetHandleVerifier [0x119c796+29a56]
+	undetected_chromedriver!GetHandleVerifier [0x11a3a1d+30cdd]
+	undetected_chromedriver!GetHandleVerifier [0x118bba8+18e68]
+	undetected_chromedriver!GetHandleVerifier [0x118bd55+19015]
+	undetected_chromedriver!GetHandleVerifier [0x1174c3f+1eff]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+
+2026-05-29 20:27:10,320 [collect_odds] INFO: ─── Novibet ───
+2026-05-29 20:27:11,364 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:27:14,007 [collect_odds] ERROR: Novibet scraper raised: Message: session not created: cannot connect to chrome at 127.0.0.1:58643
+from session not created: This version of ChromeDriver only supports Chrome version 149
+Current browser version is 148.0.7778.216; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0xc83283+10543]
+	undetected_chromedriver!GetHandleVerifier [0xc832c4+10584]
+	undetected_chromedriver!(No symbol) [0xa7a6f0]
+	undetected_chromedriver!(No symbol) [0xab64e2]
+	undetected_chromedriver!(No symbol) [0xab551c]
+	undetected_chromedriver!(No symbol) [0xaab615]
+	undetected_chromedriver!(No symbol) [0xaab436]
+	undetected_chromedriver!(No symbol) [0xaf1d4f]
+	undetected_chromedriver!(No symbol) [0xaf1567]
+	undetected_chromedriver!(No symbol) [0xae5de6]
+	undetected_chromedriver!(No symbol) [0xab90d9]
+	undetected_chromedriver!(No symbol) [0xab9ea4]
+	undetected_chromedriver!GetHandleVerifier [0xf061ea+2934aa]
+	undetected_chromedriver!GetHandleVerifier [0xf0176d+28ea2d]
+	undetected_chromedriver!GetHandleVerifier [0xf224ab+2af76b]
+	undetected_chromedriver!GetHandleVerifier [0xc9c796+29a56]
+	undetected_chromedriver!GetHandleVerifier [0xca3a1d+30cdd]
+	undetected_chromedriver!GetHandleVerifier [0xc8bba8+18e68]
+	undetected_chromedriver!GetHandleVerifier [0xc8bd55+19015]
+	undetected_chromedriver!GetHandleVerifier [0xc74c3f+1eff]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+Traceback (most recent call last):
+  File "C:\Users\skous\Super-League-odds-research\collect_odds.py", line 37, in run_scraper
+    rows = scrape_fn()
+           ^^^^^^^^^^^
+  File "C:\Users\skous\Super-League-odds-research\novibet_scraper.py", line 567, in scrape
+    driver = make_driver()
+             ^^^^^^^^^^^^^
+  File "C:\Users\skous\Super-League-odds-research\novibet_scraper.py", line 120, in make_driver
+    return uc.Chrome(options=opts)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\undetected_chromedriver\__init__.py", line 466, in __init__
+    super(Chrome, self).__init__(
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\chrome\webdriver.py", line 45, in __init__
+    super().__init__(
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\chromium\webdriver.py", line 66, in __init__
+    super().__init__(command_executor=executor, options=self.options)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\common\webdriver.py", line 25, in __init__
+    super().__init__(*args, **kwargs)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 276, in __init__
+    self.start_session(capabilities)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\undetected_chromedriver\__init__.py", line 724, in start_session
+    super(selenium.webdriver.chrome.webdriver.WebDriver, self).start_session(
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 372, in start_session
+    response = self.execute(Command.NEW_SESSION, caps)["value"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 468, in execute
+    self.error_handler.check_response(response)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\errorhandler.py", line 232, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.SessionNotCreatedException: Message: session not created: cannot connect to chrome at 127.0.0.1:58643
+from session not created: This version of ChromeDriver only supports Chrome version 149
+Current browser version is 148.0.7778.216; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0xc83283+10543]
+	undetected_chromedriver!GetHandleVerifier [0xc832c4+10584]
+	undetected_chromedriver!(No symbol) [0xa7a6f0]
+	undetected_chromedriver!(No symbol) [0xab64e2]
+	undetected_chromedriver!(No symbol) [0xab551c]
+	undetected_chromedriver!(No symbol) [0xaab615]
+	undetected_chromedriver!(No symbol) [0xaab436]
+	undetected_chromedriver!(No symbol) [0xaf1d4f]
+	undetected_chromedriver!(No symbol) [0xaf1567]
+	undetected_chromedriver!(No symbol) [0xae5de6]
+	undetected_chromedriver!(No symbol) [0xab90d9]
+	undetected_chromedriver!(No symbol) [0xab9ea4]
+	undetected_chromedriver!GetHandleVerifier [0xf061ea+2934aa]
+	undetected_chromedriver!GetHandleVerifier [0xf0176d+28ea2d]
+	undetected_chromedriver!GetHandleVerifier [0xf224ab+2af76b]
+	undetected_chromedriver!GetHandleVerifier [0xc9c796+29a56]
+	undetected_chromedriver!GetHandleVerifier [0xca3a1d+30cdd]
+	undetected_chromedriver!GetHandleVerifier [0xc8bba8+18e68]
+	undetected_chromedriver!GetHandleVerifier [0xc8bd55+19015]
+	undetected_chromedriver!GetHandleVerifier [0xc74c3f+1eff]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+
+2026-05-29 20:27:14,008 [collect_odds] INFO: ══ Done. Total rows inserted: 0 ══
+2026-05-29 20:28:50,510 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:28:50,511 [collect_odds] INFO:   Super League 1 odds collection — start  
+2026-05-29 20:28:50,511 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:28:50,511 [collect_odds] INFO: ─── Stoiximan ───
+2026-05-29 20:28:51,665 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:28:52,040 [stoiximan_scraper] INFO: [stoiximan] navigating → https://www.stoiximan.gr/sports/podosfairo/ellada/super-league-1/
+2026-05-29 20:29:44,663 [stoiximan_scraper] ERROR: [stoiximan] scrape failed: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=148.0.7778.216); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x4cb593+105d3]
+	undetected_chromedriver!GetHandleVerifier [0x4cb6c4+10704]
+	undetected_chromedriver!(No symbol) [0x2d1ea0]
+	undetected_chromedriver!(No symbol) [0x2c0dbe]
+	undetected_chromedriver!(No symbol) [0x2df98e]
+	undetected_chromedriver!(No symbol) [0x343cdc]
+	undetected_chromedriver!(No symbol) [0x35a2a9]
+	undetected_chromedriver!(No symbol) [0x33d516]
+	undetected_chromedriver!(No symbol) [0x3108e9]
+	undetected_chromedriver!(No symbol) [0x3116a4]
+	undetected_chromedriver!GetHandleVerifier [0x753014+298054]
+	undetected_chromedriver!GetHandleVerifier [0x74e603+293643]
+	undetected_chromedriver!GetHandleVerifier [0x76ea05+2b3a45]
+	undetected_chromedriver!GetHandleVerifier [0x4e54e8+2a528]
+	undetected_chromedriver!GetHandleVerifier [0x4ecd1d+31d5d]
+	undetected_chromedriver!GetHandleVerifier [0x4d3e68+18ea8]
+	undetected_chromedriver!GetHandleVerifier [0x4d4015+19055]
+	undetected_chromedriver!GetHandleVerifier [0x4bd65f+269f]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+Traceback (most recent call last):
+  File "C:\Users\skous\Super-League-odds-research\stoiximan_scraper.py", line 384, in scrape
+    _dismiss_overlays(driver)
+  File "C:\Users\skous\Super-League-odds-research\stoiximan_scraper.py", line 123, in _dismiss_overlays
+    found = _click_first_found(driver, [
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\Super-League-odds-research\stoiximan_scraper.py", line 100, in _click_first_found
+    btn = WebDriverWait(driver, timeout).until(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\support\wait.py", line 112, in until
+    value = method(self._driver)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\support\expected_conditions.py", line 514, in _predicate
+    target = driver.find_element(*target)  # grab element at locator
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 868, in find_element
+    return self.execute(Command.FIND_ELEMENT, {"using": by, "value": value})["value"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 468, in execute
+    self.error_handler.check_response(response)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\errorhandler.py", line 232, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.InvalidSessionIdException: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=148.0.7778.216); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x4cb593+105d3]
+	undetected_chromedriver!GetHandleVerifier [0x4cb6c4+10704]
+	undetected_chromedriver!(No symbol) [0x2d1ea0]
+	undetected_chromedriver!(No symbol) [0x2c0dbe]
+	undetected_chromedriver!(No symbol) [0x2df98e]
+	undetected_chromedriver!(No symbol) [0x343cdc]
+	undetected_chromedriver!(No symbol) [0x35a2a9]
+	undetected_chromedriver!(No symbol) [0x33d516]
+	undetected_chromedriver!(No symbol) [0x3108e9]
+	undetected_chromedriver!(No symbol) [0x3116a4]
+	undetected_chromedriver!GetHandleVerifier [0x753014+298054]
+	undetected_chromedriver!GetHandleVerifier [0x74e603+293643]
+	undetected_chromedriver!GetHandleVerifier [0x76ea05+2b3a45]
+	undetected_chromedriver!GetHandleVerifier [0x4e54e8+2a528]
+	undetected_chromedriver!GetHandleVerifier [0x4ecd1d+31d5d]
+	undetected_chromedriver!GetHandleVerifier [0x4d3e68+18ea8]
+	undetected_chromedriver!GetHandleVerifier [0x4d4015+19055]
+	undetected_chromedriver!GetHandleVerifier [0x4bd65f+269f]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+
+2026-05-29 20:29:44,869 [collect_odds] WARNING: Stoiximan: 0 matches scraped
+2026-05-29 20:29:44,869 [collect_odds] INFO: ─── Novibet ───
+2026-05-29 20:29:46,059 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:29:46,479 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/sports/football/greece/super-league-1
+2026-05-29 20:29:54,518 [novibet_scraper] WARNING: [novibet] direct URL https://www.novibet.gr/sports/football/greece/super-league-1 failed: 'NoneType' object has no attribute 'is_displayed'
+2026-05-29 20:29:54,518 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/sports/football/greece/super-league
+2026-05-29 20:29:54,520 [novibet_scraper] WARNING: [novibet] direct URL https://www.novibet.gr/sports/football/greece/super-league failed: Message: no such window: target window already closed
+from unknown error: web view not found
+  (Session info: chrome=148.0.7778.216)
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x7db593+105d3]
+	undetected_chromedriver!GetHandleVerifier [0x7db6c4+10704]
+	undetected_chromedriver!(No symbol) [0x5e1ea0]
+	undetected_chromedriver!(No symbol) [0x5c0933]
+	undetected_chromedriver!(No symbol) [0x653aeb]
+	undetected_chromedriver!(No symbol) [0x66a2a9]
+	undetected_chromedriver!(No symbol) [0x64d516]
+	undetected_chromedriver!(No symbol) [0x6208e9]
+	undetected_chromedriver!(No symbol) [0x6216a4]
+	undetected_chromedriver!GetHandleVerifier [0xa63014+298054]
+	undetected_chromedriver!GetHandleVerifier [0xa5e603+293643]
+	undetected_chromedriver!GetHandleVerifier [0xa7ea05+2b3a45]
+	undetected_chromedriver!GetHandleVerifier [0x7f54e8+2a528]
+	undetected_chromedriver!GetHandleVerifier [0x7fcd1d+31d5d]
+	undetected_chromedriver!GetHandleVerifier [0x7e3e68+18ea8]
+	undetected_chromedriver!GetHandleVerifier [0x7e4015+19055]
+	undetected_chromedriver!GetHandleVerifier [0x7cd65f+269f]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+
+2026-05-29 20:29:54,520 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/sports/podosfairo/ellada/super-league-1
+2026-05-29 20:29:54,521 [novibet_scraper] WARNING: [novibet] direct URL https://www.novibet.gr/sports/podosfairo/ellada/super-league-1 failed: Message: no such window: target window already closed
+from unknown error: web view not found
+  (Session info: chrome=148.0.7778.216)
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x7db593+105d3]
+	undetected_chromedriver!GetHandleVerifier [0x7db6c4+10704]
+	undetected_chromedriver!(No symbol) [0x5e1ea0]
+	undetected_chromedriver!(No symbol) [0x5c0933]
+	undetected_chromedriver!(No symbol) [0x653aeb]
+	undetected_chromedriver!(No symbol) [0x66a2a9]
+	undetected_chromedriver!(No symbol) [0x64d516]
+	undetected_chromedriver!(No symbol) [0x6208e9]
+	undetected_chromedriver!(No symbol) [0x6216a4]
+	undetected_chromedriver!GetHandleVerifier [0xa63014+298054]
+	undetected_chromedriver!GetHandleVerifier [0xa5e603+293643]
+	undetected_chromedriver!GetHandleVerifier [0xa7ea05+2b3a45]
+	undetected_chromedriver!GetHandleVerifier [0x7f54e8+2a528]
+	undetected_chromedriver!GetHandleVerifier [0x7fcd1d+31d5d]
+	undetected_chromedriver!GetHandleVerifier [0x7e3e68+18ea8]
+	undetected_chromedriver!GetHandleVerifier [0x7e4015+19055]
+	undetected_chromedriver!GetHandleVerifier [0x7cd65f+269f]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+
+2026-05-29 20:29:54,522 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/stixima/podosfairo/ellada/super-league-1
+2026-05-29 20:29:54,523 [novibet_scraper] WARNING: [novibet] direct URL https://www.novibet.gr/stixima/podosfairo/ellada/super-league-1 failed: Message: no such window: target window already closed
+from unknown error: web view not found
+  (Session info: chrome=148.0.7778.216)
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x7db593+105d3]
+	undetected_chromedriver!GetHandleVerifier [0x7db6c4+10704]
+	undetected_chromedriver!(No symbol) [0x5e1ea0]
+	undetected_chromedriver!(No symbol) [0x5c0933]
+	undetected_chromedriver!(No symbol) [0x653aeb]
+	undetected_chromedriver!(No symbol) [0x66a2a9]
+	undetected_chromedriver!(No symbol) [0x64d516]
+	undetected_chromedriver!(No symbol) [0x6208e9]
+	undetected_chromedriver!(No symbol) [0x6216a4]
+	undetected_chromedriver!GetHandleVerifier [0xa63014+298054]
+	undetected_chromedriver!GetHandleVerifier [0xa5e603+293643]
+	undetected_chromedriver!GetHandleVerifier [0xa7ea05+2b3a45]
+	undetected_chromedriver!GetHandleVerifier [0x7f54e8+2a528]
+	undetected_chromedriver!GetHandleVerifier [0x7fcd1d+31d5d]
+	undetected_chromedriver!GetHandleVerifier [0x7e3e68+18ea8]
+	undetected_chromedriver!GetHandleVerifier [0x7e4015+19055]
+	undetected_chromedriver!GetHandleVerifier [0x7cd65f+269f]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+
+2026-05-29 20:29:54,523 [novibet_scraper] INFO: [novibet] falling back to daily coupon
+2026-05-29 20:29:54,524 [novibet_scraper] ERROR: [novibet] daily coupon fallback failed: Message: no such window: target window already closed
+from unknown error: web view not found
+  (Session info: chrome=148.0.7778.216)
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x7db593+105d3]
+	undetected_chromedriver!GetHandleVerifier [0x7db6c4+10704]
+	undetected_chromedriver!(No symbol) [0x5e1ea0]
+	undetected_chromedriver!(No symbol) [0x5c0933]
+	undetected_chromedriver!(No symbol) [0x653aeb]
+	undetected_chromedriver!(No symbol) [0x66a2a9]
+	undetected_chromedriver!(No symbol) [0x64d516]
+	undetected_chromedriver!(No symbol) [0x6208e9]
+	undetected_chromedriver!(No symbol) [0x6216a4]
+	undetected_chromedriver!GetHandleVerifier [0xa63014+298054]
+	undetected_chromedriver!GetHandleVerifier [0xa5e603+293643]
+	undetected_chromedriver!GetHandleVerifier [0xa7ea05+2b3a45]
+	undetected_chromedriver!GetHandleVerifier [0x7f54e8+2a528]
+	undetected_chromedriver!GetHandleVerifier [0x7fcd1d+31d5d]
+	undetected_chromedriver!GetHandleVerifier [0x7e3e68+18ea8]
+	undetected_chromedriver!GetHandleVerifier [0x7e4015+19055]
+	undetected_chromedriver!GetHandleVerifier [0x7cd65f+269f]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+Traceback (most recent call last):
+  File "C:\Users\skous\Super-League-odds-research\novibet_scraper.py", line 534, in _try_daily_coupon
+    driver.get(MAIN_URL)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\undetected_chromedriver\__init__.py", line 665, in get
+    return super().get(url)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 488, in get
+    self.execute(Command.GET, {"url": url})
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 468, in execute
+    self.error_handler.check_response(response)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\errorhandler.py", line 232, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.NoSuchWindowException: Message: no such window: target window already closed
+from unknown error: web view not found
+  (Session info: chrome=148.0.7778.216)
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x7db593+105d3]
+	undetected_chromedriver!GetHandleVerifier [0x7db6c4+10704]
+	undetected_chromedriver!(No symbol) [0x5e1ea0]
+	undetected_chromedriver!(No symbol) [0x5c0933]
+	undetected_chromedriver!(No symbol) [0x653aeb]
+	undetected_chromedriver!(No symbol) [0x66a2a9]
+	undetected_chromedriver!(No symbol) [0x64d516]
+	undetected_chromedriver!(No symbol) [0x6208e9]
+	undetected_chromedriver!(No symbol) [0x6216a4]
+	undetected_chromedriver!GetHandleVerifier [0xa63014+298054]
+	undetected_chromedriver!GetHandleVerifier [0xa5e603+293643]
+	undetected_chromedriver!GetHandleVerifier [0xa7ea05+2b3a45]
+	undetected_chromedriver!GetHandleVerifier [0x7f54e8+2a528]
+	undetected_chromedriver!GetHandleVerifier [0x7fcd1d+31d5d]
+	undetected_chromedriver!GetHandleVerifier [0x7e3e68+18ea8]
+	undetected_chromedriver!GetHandleVerifier [0x7e4015+19055]
+	undetected_chromedriver!GetHandleVerifier [0x7cd65f+269f]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+
+2026-05-29 20:29:54,526 [novibet_scraper] WARNING: [novibet] 0 rows — check DIRECT_URLS list and coupon selectors in novibet_scraper.py. Run with headless=False to watch the browser.
+2026-05-29 20:29:54,860 [collect_odds] WARNING: Novibet: 0 matches scraped
+2026-05-29 20:29:54,860 [collect_odds] INFO: ══ Done. Total rows inserted: 0 ══
+2026-05-29 20:34:38,727 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:34:38,727 [collect_odds] INFO:   Super League 1 odds collection — start  
+2026-05-29 20:34:38,727 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:34:38,727 [collect_odds] INFO: ─── Stoiximan ───
+2026-05-29 20:34:41,631 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:34:42,256 [stoiximan_scraper] INFO: [stoiximan] navigating → https://www.stoiximan.gr/sports/podosfairo/ellada/super-league-1/
+2026-05-29 20:36:09,895 [stoiximan_scraper] INFO:   content container matched: [class*='grid__column--main']
+2026-05-29 20:36:10,195 [stoiximan_scraper] INFO: [stoiximan] raw lines from container: 498
+2026-05-29 20:36:10,200 [stoiximan_scraper] INFO: [stoiximan] parsed 0 match rows
+2026-05-29 20:36:10,200 [stoiximan_scraper] WARNING: [stoiximan] 0 rows — likely stale selectors or page structure change. Check SUPER_LEAGUE_URL and the content container selector in _get_content_text().
+2026-05-29 20:36:10,530 [collect_odds] WARNING: Stoiximan: 0 matches scraped
+2026-05-29 20:36:10,530 [collect_odds] INFO: ─── Novibet ───
+2026-05-29 20:36:12,990 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:36:13,388 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/sports/football/greece/super-league-1
+2026-05-29 20:37:50,163 [novibet_scraper] INFO: [novibet] direct page raw lines: 668
+2026-05-29 20:37:50,166 [novibet_scraper] INFO: [novibet] direct URL yielded 0 matches, trying next
+2026-05-29 20:37:50,166 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/sports/football/greece/super-league
+2026-05-29 20:41:23,243 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:41:23,243 [collect_odds] INFO:   Super League 1 odds collection — start  
+2026-05-29 20:41:23,243 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:41:23,244 [collect_odds] INFO: ─── Stoiximan ───
+2026-05-29 20:41:25,969 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:41:26,335 [stoiximan_scraper] INFO: [stoiximan] navigating → ('https://en.stoiximan.gr/sport/soccer/greece/stoiximan-super-league/1636/', 'https://www.stoiximan.gr/sports/podosfairo/ellada/super-league-1/')
+2026-05-29 20:41:26,354 [stoiximan_scraper] ERROR: [stoiximan] scrape failed: Message: invalid argument: 'url' must be a string
+  (Session info: chrome=148.0.7778.216)
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x10db593+105d3]
+	undetected_chromedriver!GetHandleVerifier [0x10db6c4+10704]
+	undetected_chromedriver!(No symbol) [0xee1ea0]
+	undetected_chromedriver!(No symbol) [0xf6b45d]
+	undetected_chromedriver!(No symbol) [0xf4d77c]
+	undetected_chromedriver!(No symbol) [0xf6a936]
+	undetected_chromedriver!(No symbol) [0xf4d516]
+	undetected_chromedriver!(No symbol) [0xf208e9]
+	undetected_chromedriver!(No symbol) [0xf216a4]
+	undetected_chromedriver!GetHandleVerifier [0x1363014+298054]
+	undetected_chromedriver!GetHandleVerifier [0x135e603+293643]
+	undetected_chromedriver!GetHandleVerifier [0x137ea05+2b3a45]
+	undetected_chromedriver!GetHandleVerifier [0x10f54e8+2a528]
+	undetected_chromedriver!GetHandleVerifier [0x10fcd1d+31d5d]
+	undetected_chromedriver!GetHandleVerifier [0x10e3e68+18ea8]
+	undetected_chromedriver!GetHandleVerifier [0x10e4015+19055]
+	undetected_chromedriver!GetHandleVerifier [0x10cd65f+269f]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+Traceback (most recent call last):
+  File "C:\Users\skous\Super-League-odds-research\stoiximan_scraper.py", line 382, in scrape
+    driver.get(SUPER_LEAGUE_URL)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\undetected_chromedriver\__init__.py", line 665, in get
+    return super().get(url)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 488, in get
+    self.execute(Command.GET, {"url": url})
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 468, in execute
+    self.error_handler.check_response(response)
+  File "C:\Users\skous\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\errorhandler.py", line 232, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.InvalidArgumentException: Message: invalid argument: 'url' must be a string
+  (Session info: chrome=148.0.7778.216)
+Stacktrace:
+	undetected_chromedriver!GetHandleVerifier [0x10db593+105d3]
+	undetected_chromedriver!GetHandleVerifier [0x10db6c4+10704]
+	undetected_chromedriver!(No symbol) [0xee1ea0]
+	undetected_chromedriver!(No symbol) [0xf6b45d]
+	undetected_chromedriver!(No symbol) [0xf4d77c]
+	undetected_chromedriver!(No symbol) [0xf6a936]
+	undetected_chromedriver!(No symbol) [0xf4d516]
+	undetected_chromedriver!(No symbol) [0xf208e9]
+	undetected_chromedriver!(No symbol) [0xf216a4]
+	undetected_chromedriver!GetHandleVerifier [0x1363014+298054]
+	undetected_chromedriver!GetHandleVerifier [0x135e603+293643]
+	undetected_chromedriver!GetHandleVerifier [0x137ea05+2b3a45]
+	undetected_chromedriver!GetHandleVerifier [0x10f54e8+2a528]
+	undetected_chromedriver!GetHandleVerifier [0x10fcd1d+31d5d]
+	undetected_chromedriver!GetHandleVerifier [0x10e3e68+18ea8]
+	undetected_chromedriver!GetHandleVerifier [0x10e4015+19055]
+	undetected_chromedriver!GetHandleVerifier [0x10cd65f+269f]
+	KERNEL32!BaseThreadInitThunk [0x750d5d49+19]
+	ntdll!RtlInitializeExceptionChain [0x76fed83b+6b]
+	ntdll!RtlGetAppContainerNamedObjectPath [0x76fed7c1+231]
+
+2026-05-29 20:41:26,485 [collect_odds] WARNING: Stoiximan: 0 matches scraped
+2026-05-29 20:41:26,486 [collect_odds] INFO: ─── Novibet ───
+2026-05-29 20:41:29,435 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:41:29,827 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/stoixima/podosfairo/4372606/greece/super-league-1/5909217
+2026-05-29 20:42:35,395 [novibet_scraper] INFO:   modal dismissed
+2026-05-29 20:42:40,509 [novibet_scraper] INFO: [novibet] direct page raw lines: 625
+2026-05-29 20:42:40,511 [novibet_scraper] INFO: [novibet] direct URL yielded 0 matches, trying next
+2026-05-29 20:42:40,511 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/sports/football/greece/super-league-1
+2026-05-29 20:43:58,789 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:43:58,789 [collect_odds] INFO:   Super League 1 odds collection — start  
+2026-05-29 20:43:58,789 [collect_odds] INFO: ══════════════════════════════════════════
+2026-05-29 20:43:58,790 [collect_odds] INFO: ─── Stoiximan ───
+2026-05-29 20:44:01,221 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:44:01,630 [stoiximan_scraper] INFO: [stoiximan] navigating → https://en.stoiximan.gr/sport/soccer/greece/stoiximan-super-league/1636/
+2026-05-29 20:44:16,796 [stoiximan_scraper] INFO:   cookies accepted
+2026-05-29 20:44:54,699 [stoiximan_scraper] INFO:   content container matched: main
+2026-05-29 20:44:54,957 [stoiximan_scraper] INFO: [stoiximan] raw lines from container: 256
+2026-05-29 20:44:54,958 [stoiximan_scraper] INFO: [stoiximan] parsed 0 match rows
+2026-05-29 20:44:54,958 [stoiximan_scraper] WARNING: [stoiximan] 0 rows — likely stale selectors or page structure change. Check SUPER_LEAGUE_URL and the content container selector in _get_content_text().
+2026-05-29 20:44:55,235 [collect_odds] WARNING: Stoiximan: 0 matches scraped
+2026-05-29 20:44:55,235 [collect_odds] INFO: ─── Novibet ───
+2026-05-29 20:44:57,552 [undetected_chromedriver.patcher] INFO: patching driver executable C:\Users\skous\appdata\roaming\undetected_chromedriver\undetected_chromedriver.exe
+2026-05-29 20:44:57,952 [novibet_scraper] INFO: [novibet] trying direct URL: https://www.novibet.gr/stoixima/podosfairo/4372606/greece/super-league-1/5909217

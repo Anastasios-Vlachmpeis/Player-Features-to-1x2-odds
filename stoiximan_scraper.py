@@ -31,9 +31,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 BOOKMAKER = "stoiximan"
 SUPER_LEAGUE_URL = (
-    "https://www.stoiximan.gr/sports/podosfairo/ellada/super-league-1/"
+    "https://en.stoiximan.gr/sport/soccer/greece/stoiximan-super-league/1636/"
 )
-
+# "https://www.stoiximan.gr/sports/podosfairo/ellada/super-league-1/"
 logger = logging.getLogger(__name__)
 
 # --- regex helpers ---
@@ -86,7 +86,7 @@ def make_driver(headless: bool = False) -> uc.Chrome:
     opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--window-size=1920,1080")
     opts.add_argument("--disable-blink-features=AutomationControlled")
-    return uc.Chrome(options=opts)
+    return uc.Chrome(options=opts, version_main=148)
 
 
 # ---------------------------------------------------------------------------

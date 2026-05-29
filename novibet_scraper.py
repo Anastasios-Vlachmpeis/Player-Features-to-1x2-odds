@@ -57,11 +57,12 @@ BOOKMAKER = "novibet"
 
 # Try both English and Greek slugs; the scraper will try them in order
 DIRECT_URLS = [
-    "https://www.novibet.gr/sports/football/greece/super-league-1",
-    "https://www.novibet.gr/sports/football/greece/super-league",
-    "https://www.novibet.gr/sports/podosfairo/ellada/super-league-1",
-    "https://www.novibet.gr/stixima/podosfairo/ellada/super-league-1",
+    "https://www.novibet.gr/stoixima/podosfairo/4372606/greece/super-league-1/5909217"
 ]
+# "https://www.novibet.gr/sports/football/greece/super-league-1",
+#     "https://www.novibet.gr/sports/football/greece/super-league",
+#     "https://www.novibet.gr/sports/podosfairo/ellada/super-league-1",
+#     "https://www.novibet.gr/stixima/podosfairo/ellada/super-league-1",
 MAIN_URL    = "https://www.novibet.gr/"
 COUPON_URL  = "https://www.novibet.gr/sports/daily-coupon"
 
@@ -117,7 +118,7 @@ def make_driver(headless: bool = False) -> uc.Chrome:
     opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--window-size=1920,1080")
     opts.add_argument("--disable-blink-features=AutomationControlled")
-    return uc.Chrome(options=opts)
+    return uc.Chrome(options=opts, version_main=148)
 
 
 # ---------------------------------------------------------------------------
