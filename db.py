@@ -123,3 +123,107 @@ def upsert_injuries(tm_id: int, injuries: list) -> None:
                 injuries,
             )
         conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Sofascore per-match stats (same player_stats.db — new tables only)
+# ---------------------------------------------------------------------------
+
+def init_sofascore_db() -> None:
+    with sqlite3.connect(PLAYER_DB_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sofascore_players (
+                sofascore_id INTEGER,
+                player_name  TEXT,
+                PRIMARY KEY (sofascore_id)
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sofascore_match_stats (
+                sofascore_id    INTEGER,
+                match_id        INTEGER,
+                match_date      TEXT,
+                home_team       TEXT,
+                away_team       TEXT,
+                player_team     TEXT,
+                rating          REAL,
+                minutes_played  INTEGER,
+                goals           INTEGER,
+                assists         INTEGER,
+                key_passes      INTEGER,
+                total_passes    INTEGER,
+                accurate_passes INTEGER,
+                tackles         INTEGER,
+                interceptions   INTEGER,
+                clearances      INTEGER,
+                aerial_won      INTEGER,
+                aerial_total    INTEGER,
+                is_starter      BOOLEAN,
+                scraped_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (sofascore_id, match_id)
+            )
+        """)
+        conn.commit()
+
+
+def upsert_sofascore_player(sofascore_id: int, player_name: str) -> None:
+    """Insert or update the player-name lookup row keyed on sofascore_id."""
+    with sqlite3.connect(PLAYER_DB_PATH) as conn:
+        conn.execute(
+            """
+            INSERT INTO sofascore_players (sofascore_id, player_name)
+            VALUES (:sofascore_id, :player_name)
+            ON CONFLICT(sofascore_id) DO UPDATE SET
+                player_name = excluded.player_name
+            """,
+            {"sofascore_id": sofascore_id, "player_name": player_name},
+        )
+        conn.commit()
+
+
+def upsert_sofascore_match_stats(rows: list) -> None:
+    """
+    Upsert per-player per-match stat rows on composite key (sofascore_id, match_id).
+
+    rows: list of dicts matching the sofascore_match_stats columns.
+    """
+    if not rows:
+        return
+    with sqlite3.connect(PLAYER_DB_PATH) as conn:
+        conn.executemany(
+            """
+            INSERT INTO sofascore_match_stats
+                (sofascore_id, match_id, match_date, home_team, away_team,
+                 player_team, rating, minutes_played, goals, assists,
+                 key_passes, total_passes, accurate_passes, tackles,
+                 interceptions, clearances, aerial_won, aerial_total,
+                 is_starter, scraped_at)
+            VALUES
+                (:sofascore_id, :match_id, :match_date, :home_team, :away_team,
+                 :player_team, :rating, :minutes_played, :goals, :assists,
+                 :key_passes, :total_passes, :accurate_passes, :tackles,
+                 :interceptions, :clearances, :aerial_won, :aerial_total,
+                 :is_starter, CURRENT_TIMESTAMP)
+            ON CONFLICT(sofascore_id, match_id) DO UPDATE SET
+                match_date      = excluded.match_date,
+                home_team       = excluded.home_team,
+                away_team       = excluded.away_team,
+                player_team     = excluded.player_team,
+                rating          = excluded.rating,
+                minutes_played  = excluded.minutes_played,
+                goals           = excluded.goals,
+                assists         = excluded.assists,
+                key_passes      = excluded.key_passes,
+                total_passes    = excluded.total_passes,
+                accurate_passes = excluded.accurate_passes,
+                tackles         = excluded.tackles,
+                interceptions   = excluded.interceptions,
+                clearances      = excluded.clearances,
+                aerial_won      = excluded.aerial_won,
+                aerial_total    = excluded.aerial_total,
+                is_starter      = excluded.is_starter,
+                scraped_at      = CURRENT_TIMESTAMP
+            """,
+            rows,
+        )
+        conn.commit()

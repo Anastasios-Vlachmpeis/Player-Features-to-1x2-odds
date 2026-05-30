@@ -37,7 +37,7 @@ def run() -> None:
 
     for club in clubs:
         club_name = club["club_name"]
-        log.info("── %s", club_name)
+        log.info(">> %s", club_name)
 
         squad = get_squad(club["club_id"], club["club_slug"], club_name)
         log.info("   %d players in squad", len(squad))
