@@ -227,3 +227,99 @@ def upsert_sofascore_match_stats(rows: list) -> None:
             rows,
         )
         conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# FBref advanced metrics (same player_stats.db — new tables only)
+# Supplementary source; sparse coverage is expected, missing metrics = NULL.
+# ---------------------------------------------------------------------------
+
+def init_fbref_db() -> None:
+    with sqlite3.connect(PLAYER_DB_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS fbref_players (
+                fbref_id    TEXT PRIMARY KEY,
+                player_name TEXT
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS fbref_match_stats (
+                fbref_id            TEXT,
+                match_id            TEXT,
+                match_date          TEXT,
+                home_team           TEXT,
+                away_team           TEXT,
+                player_team         TEXT,
+                xg                  REAL,
+                xa                  REAL,
+                npxg                REAL,
+                sca                 REAL,
+                gca                 REAL,
+                progressive_carries INTEGER,
+                progressive_passes  INTEGER,
+                touches_att_pen     INTEGER,
+                carries_final_third INTEGER,
+                scraped_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (fbref_id, match_id)
+            )
+        """)
+        conn.commit()
+
+
+def upsert_fbref_player(fbref_id: str, player_name: str) -> None:
+    """Insert or update the player-name lookup row keyed on fbref_id."""
+    with sqlite3.connect(PLAYER_DB_PATH) as conn:
+        conn.execute(
+            """
+            INSERT INTO fbref_players (fbref_id, player_name)
+            VALUES (:fbref_id, :player_name)
+            ON CONFLICT(fbref_id) DO UPDATE SET
+                player_name = excluded.player_name
+            """,
+            {"fbref_id": fbref_id, "player_name": player_name},
+        )
+        conn.commit()
+
+
+def upsert_fbref_match_stats(rows: list) -> None:
+    """
+    Upsert per-player per-match advanced metrics on key (fbref_id, match_id).
+
+    rows: list of dicts matching the fbref_match_stats columns. Any metric the
+    match page didn't provide should already be None in the dict — it is stored
+    as NULL, never treated as an error.
+    """
+    if not rows:
+        return
+    with sqlite3.connect(PLAYER_DB_PATH) as conn:
+        conn.executemany(
+            """
+            INSERT INTO fbref_match_stats
+                (fbref_id, match_id, match_date, home_team, away_team,
+                 player_team, xg, xa, npxg, sca, gca, progressive_carries,
+                 progressive_passes, touches_att_pen, carries_final_third,
+                 scraped_at)
+            VALUES
+                (:fbref_id, :match_id, :match_date, :home_team, :away_team,
+                 :player_team, :xg, :xa, :npxg, :sca, :gca, :progressive_carries,
+                 :progressive_passes, :touches_att_pen, :carries_final_third,
+                 CURRENT_TIMESTAMP)
+            ON CONFLICT(fbref_id, match_id) DO UPDATE SET
+                match_date          = excluded.match_date,
+                home_team           = excluded.home_team,
+                away_team           = excluded.away_team,
+                player_team         = excluded.player_team,
+                xg                  = excluded.xg,
+                xa                  = excluded.xa,
+                npxg                = excluded.npxg,
+                sca                 = excluded.sca,
+                gca                 = excluded.gca,
+                progressive_carries = excluded.progressive_carries,
+                progressive_passes  = excluded.progressive_passes,
+                touches_att_pen     = excluded.touches_att_pen,
+                carries_final_third = excluded.carries_final_third,
+                scraped_at          = CURRENT_TIMESTAMP
+            """,
+            rows,
+        )
+        conn.commit()
