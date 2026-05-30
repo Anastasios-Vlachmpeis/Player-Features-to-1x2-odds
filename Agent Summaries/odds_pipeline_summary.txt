@@ -1,0 +1,48 @@
+ODDS DATA PIPELINE — IMPLEMENTATION SUMMARY
+===========================================
+
+What was built in this session
+-------------------------------
+A standalone odds scraping module that collects 1X2 (home/draw/away) odds
+from two Greek bookmakers and stores them in a local SQLite database.
+
+Files created
+-------------
+collect_odds.py       Entry script. Run: python collect_odds.py
+                      Calls both scrapers, inserts results, logs to collect_odds.log.
+
+db.py                 SQLite layer. Initialises odds.db and exposes init_db() / insert_odds().
+                      Schema: match_odds(match_id, home_team, away_team, match_date,
+                              bookmaker, home_win, draw, away_win, scraped_at)
+                      match_id is a slug: {home}_{away}_{YYYY-MM-DD}
+
+stoiximan_scraper.py  Scrapes Stoiximan via undetected_chromedriver.
+                      Navigates directly to TARGET_URL (configurable at top of file),
+                      scrolls to load lazy content, extracts page text, parses 1X2 odds.
+
+novibet_scraper.py    Scrapes Novibet. Tries DIRECT_URLS list first; falls back to
+                      the site's Daily Coupon feature filtered by _TARGET_KEYWORDS.
+
+requirements.txt      undetected-chromedriver>=3.5.5, selenium>=4.11.0
+
+Key design decisions
+--------------------
+- undetected_chromedriver instead of plain Selenium (bot-detection avoidance)
+- SQLite output instead of CSV
+- One clean daily snapshot (no while-True loop); schedulable via cron
+- Text-blob extraction + line parser (resilient to CSS class renames)
+- Multi-selector fallbacks for cookies/modals so minor site redesigns don't crash runs
+- Filters to fixtures within the next 14 days
+
+Competition target (how to switch leagues)
+------------------------------------------
+stoiximan_scraper.py : edit the TARGET_URL block (~line 35)
+novibet_scraper.py   : edit DIRECT_URLS (~line 60) and _TARGET_KEYWORDS (~line 110)
+Currently active     : UEFA Champions League
+Commented out        : Super League 1 (Greece), Ligue 1, Premier League
+
+Known constraints
+-----------------
+- Both sites are geo-restricted. A system-level VPN set to Greece is required.
+- version_main=148 is pinned to match Chrome 148.0.7778.216. Update if Chrome upgrades.
+- Novibet Champions League URL slugs are best-guess; verify from address bar if 0 rows returned.
