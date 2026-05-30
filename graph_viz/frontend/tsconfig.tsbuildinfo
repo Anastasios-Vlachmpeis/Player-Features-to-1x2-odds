@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts","./src/components/detailpanel.tsx","./src/components/graphcanvas.tsx","./src/components/toolbar.tsx","./src/utils/format.ts","./src/utils/teamcolors.ts"],"version":"5.8.3"}

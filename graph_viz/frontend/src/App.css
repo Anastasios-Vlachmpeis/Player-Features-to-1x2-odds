@@ -1,0 +1,341 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #0d0f14;
+}
+
+.app-shell.loading {
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #9aa3b5;
+}
+
+.app-shell.loading .hint {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(18, 21, 28, 0.95);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.toolbar-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.brand-title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.brand-meta {
+  font-size: 0.75rem;
+  color: #7a8499;
+}
+
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #9aa3b5;
+}
+
+.filter-label select {
+  background: #1a1e28;
+  color: #e8ecf4;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  min-width: 11rem;
+}
+
+.search-wrap {
+  position: relative;
+}
+
+.search-wrap input {
+  width: 220px;
+  background: #1a1e28;
+  color: #e8ecf4;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0.4rem 0.65rem;
+}
+
+.search-wrap input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 280px;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: #1a1e28;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 20;
+}
+
+.search-suggestions li button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  background: none;
+  border: none;
+  color: #e8ecf4;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-suggestions li button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.suggestion-type {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.suggestion-type.team {
+  color: #7eb8ff;
+}
+
+.team-badge.league-badge {
+  border-color: #d4af37;
+  color: #d4af37;
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.suggestion-type.league {
+  color: #d4af37;
+}
+
+.suggestion-type.player {
+  color: #a8d4a0;
+}
+
+.suggestion-club {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #7a8499;
+}
+
+.app-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.graph-canvas {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.detail-panel {
+  width: 320px;
+  flex-shrink: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(18, 21, 28, 0.98);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.detail-panel-header h1 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7a8499;
+}
+
+.btn-clear {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #9aa3b5;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.btn-clear:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8ecf4;
+}
+
+.detail-empty {
+  padding: 1.25rem;
+  color: #7a8499;
+  font-size: 0.875rem;
+}
+
+.detail-empty ul {
+  margin: 1rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.detail-empty li {
+  margin-bottom: 0.35rem;
+}
+
+.detail-content {
+  padding: 1rem 1.25rem 1.5rem;
+}
+
+.team-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.team-badge.small {
+  font-size: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.player-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.player-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.shirt-number {
+  font-size: 0.875rem;
+  color: #7a8499;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.detail-grid dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7a8499;
+  margin-bottom: 0.15rem;
+}
+
+.detail-grid dd {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.detail-hint {
+  font-size: 0.8125rem;
+  color: #7a8499;
+  margin: 0;
+}
+
+.injuries-section h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #9aa3b5;
+}
+
+.injury-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.injury-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.injury-type {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.injury-dates {
+  font-size: 0.75rem;
+  color: #7a8499;
+}
+
+.injury-missed {
+  font-size: 0.7rem;
+  color: #c9a227;
+}
+
+.empty-note {
+  font-size: 0.8125rem;
+  color: #7a8499;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .detail-panel {
+    width: 280px;
+  }
+
+  .search-wrap input {
+    width: 160px;
+  }
+}
