@@ -323,3 +323,57 @@ def upsert_fbref_match_stats(rows: list) -> None:
             rows,
         )
         conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Sofascore xG / xGOT (aggregated from the per-match shotmap endpoint)
+# Same player_stats.db — new table only. Players with no shots get no row.
+# ---------------------------------------------------------------------------
+
+def init_sofascore_xg_db() -> None:
+    with sqlite3.connect(PLAYER_DB_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sofascore_xg (
+                sofascore_id INTEGER,
+                match_id     INTEGER,
+                match_date   TEXT,
+                player_team  TEXT,
+                xg           REAL,
+                xgot         REAL,
+                shots        INTEGER,
+                scraped_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (sofascore_id, match_id)
+            )
+        """)
+        conn.commit()
+
+
+def upsert_sofascore_xg(rows: list) -> None:
+    """
+    Upsert per-player per-match xG aggregates on key (sofascore_id, match_id).
+
+    rows: list of dicts with keys sofascore_id, match_id, match_date,
+    player_team, xg, xgot, shots.
+    """
+    if not rows:
+        return
+    with sqlite3.connect(PLAYER_DB_PATH) as conn:
+        conn.executemany(
+            """
+            INSERT INTO sofascore_xg
+                (sofascore_id, match_id, match_date, player_team,
+                 xg, xgot, shots, scraped_at)
+            VALUES
+                (:sofascore_id, :match_id, :match_date, :player_team,
+                 :xg, :xgot, :shots, CURRENT_TIMESTAMP)
+            ON CONFLICT(sofascore_id, match_id) DO UPDATE SET
+                match_date  = excluded.match_date,
+                player_team = excluded.player_team,
+                xg          = excluded.xg,
+                xgot        = excluded.xgot,
+                shots       = excluded.shots,
+                scraped_at  = CURRENT_TIMESTAMP
+            """,
+            rows,
+        )
+        conn.commit()

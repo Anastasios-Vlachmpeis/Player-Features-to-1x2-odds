@@ -254,3 +254,79 @@ def get_match_player_rows(event: dict) -> list:
         rows += _extract_side(data["away"], event["away_team"], event)
 
     return rows
+
+
+# ---------------------------------------------------------------------------
+# Per-match xG / xGOT — aggregated from the shotmap endpoint
+# ---------------------------------------------------------------------------
+
+def get_match_xg_rows(event: dict) -> Optional[list]:
+    """Fetch the shotmap for one event and aggregate xG/xGOT per player.
+
+    Endpoint: /event/{match_id}/shotmap
+    Each shot object carries:
+      - player.id / player.name : who took the shot
+      - xg                       : expected goals for that shot (float)
+      - xgot                     : expected goals on target (0 for off-target)
+      - isHome                   : True => home side, used for team attribution
+    We sum xg and xgot and count shots per player.
+
+    Returns:
+      list[dict] of per-player aggregates (one row per player who shot), or
+      None if the match has no shotmap (distinct from an empty match) so the
+      caller can log "missing shotmap" vs "shotmap present but empty".
+    """
+    url = f"{API_BASE}/event/{event['match_id']}/shotmap"
+    data = _get_json(url)
+    if not data:
+        return None
+
+    # Sofascore returns the shots under "shotmap" (older payloads: "shots")
+    shots = data.get("shotmap")
+    if shots is None:
+        shots = data.get("shots")
+    if shots is None:
+        return None  # endpoint responded but carries no shot array
+
+    agg = {}  # sofascore_id -> running totals
+    for shot in shots:
+        player = shot.get("player") or {}
+        sofascore_id = player.get("id")
+        if sofascore_id is None:
+            continue
+
+        xg = shot.get("xg")
+        xgot = shot.get("xgot")
+        # xg should be present for Greek matches (validated), but guard anyway:
+        # a shot with no xg still counts as a shot, contributing 0 to the sums.
+        xg_val = float(xg) if isinstance(xg, (int, float)) else 0.0
+        xgot_val = float(xgot) if isinstance(xgot, (int, float)) else 0.0
+
+        # isHome on the shot maps to the event's home/away team name
+        team = (
+            event["home_team"] if shot.get("isHome") else event["away_team"]
+        )
+
+        rec = agg.get(sofascore_id)
+        if rec is None:
+            agg[sofascore_id] = {
+                "sofascore_id": sofascore_id,
+                "match_id": event["match_id"],
+                "match_date": event["match_date"],
+                "player_team": team,
+                "xg": xg_val,
+                "xgot": xgot_val,
+                "shots": 1,
+            }
+        else:
+            rec["xg"] += xg_val
+            rec["xgot"] += xgot_val
+            rec["shots"] += 1
+
+    # Round the sums to avoid long float tails in the DB
+    rows = list(agg.values())
+    for r in rows:
+        r["xg"] = round(r["xg"], 4)
+        r["xgot"] = round(r["xgot"], 4)
+
+    return rows
