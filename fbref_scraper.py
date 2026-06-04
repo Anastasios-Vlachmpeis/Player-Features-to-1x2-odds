@@ -46,8 +46,8 @@ _IMPERSONATE = "chrome"
 # Greek Super League competition id on FBref.
 # FRAGILE: verify by opening https://fbref.com/en/comps/ and finding "Super
 # League Greece" — the number in its URL is this id. Update if it ever changes.
-FBREF_COMP_ID = "84"
-COMP_SLUG = "Greek-Super-League"
+FBREF_COMP_ID = "27"
+COMP_SLUG = "Super-League-Greece-Seasons"
 
 # No season in the path = current season's schedule.
 SCHEDULE_URL = (
