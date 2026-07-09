@@ -302,6 +302,11 @@ def get_match_xg_rows(event: dict) -> Optional[list]:
         xg_val = float(xg) if isinstance(xg, (int, float)) else 0.0
         xgot_val = float(xgot) if isinstance(xgot, (int, float)) else 0.0
 
+        # Shot on target = a goal or a saved shot. Blocked/miss/post are NOT on
+        # target. shotType is Sofascore's own classification (goal/save/block/
+        # miss/post), so we read it directly rather than inferring from xgot.
+        is_on_target = 1 if shot.get("shotType") in ("goal", "save") else 0
+
         # isHome on the shot maps to the event's home/away team name
         team = (
             event["home_team"] if shot.get("isHome") else event["away_team"]
@@ -317,11 +322,13 @@ def get_match_xg_rows(event: dict) -> Optional[list]:
                 "xg": xg_val,
                 "xgot": xgot_val,
                 "shots": 1,
+                "sot": is_on_target,
             }
         else:
             rec["xg"] += xg_val
             rec["xgot"] += xgot_val
             rec["shots"] += 1
+            rec["sot"] += is_on_target
 
     # Round the sums to avoid long float tails in the DB
     rows = list(agg.values())

@@ -341,10 +341,15 @@ def init_sofascore_xg_db() -> None:
                 xg           REAL,
                 xgot         REAL,
                 shots        INTEGER,
+                sot          INTEGER,
                 scraped_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (sofascore_id, match_id)
             )
         """)
+        # Add sot to pre-existing tables created before this column existed.
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(sofascore_xg)")]
+        if "sot" not in cols:
+            conn.execute("ALTER TABLE sofascore_xg ADD COLUMN sot INTEGER")
         conn.commit()
 
 
@@ -353,7 +358,7 @@ def upsert_sofascore_xg(rows: list) -> None:
     Upsert per-player per-match xG aggregates on key (sofascore_id, match_id).
 
     rows: list of dicts with keys sofascore_id, match_id, match_date,
-    player_team, xg, xgot, shots.
+    player_team, xg, xgot, shots, sot.
     """
     if not rows:
         return
@@ -362,16 +367,17 @@ def upsert_sofascore_xg(rows: list) -> None:
             """
             INSERT INTO sofascore_xg
                 (sofascore_id, match_id, match_date, player_team,
-                 xg, xgot, shots, scraped_at)
+                 xg, xgot, shots, sot, scraped_at)
             VALUES
                 (:sofascore_id, :match_id, :match_date, :player_team,
-                 :xg, :xgot, :shots, CURRENT_TIMESTAMP)
+                 :xg, :xgot, :shots, :sot, CURRENT_TIMESTAMP)
             ON CONFLICT(sofascore_id, match_id) DO UPDATE SET
                 match_date  = excluded.match_date,
                 player_team = excluded.player_team,
                 xg          = excluded.xg,
                 xgot        = excluded.xgot,
                 shots       = excluded.shots,
+                sot         = excluded.sot,
                 scraped_at  = CURRENT_TIMESTAMP
             """,
             rows,
