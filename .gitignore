@@ -1,3 +1,8 @@
 *.venv
+.venv-test/
 node_modules/
 graph_viz/frontend/dist/
+artifacts/
+__pycache__/
+*.pyc
+.pytest_cache/

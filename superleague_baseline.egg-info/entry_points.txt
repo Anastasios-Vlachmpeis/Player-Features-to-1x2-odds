@@ -1,0 +1,2 @@
+[console_scripts]
+superleague-baseline = superleague_baseline.cli:main
