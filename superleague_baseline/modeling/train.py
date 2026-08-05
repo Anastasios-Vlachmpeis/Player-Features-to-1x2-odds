@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 
 from superleague_baseline.constants import CLASS_ORDER, PROB_SUM_TOL
 from superleague_baseline.modeling.metrics import evaluate_probs, reorder_probabilities
+from superleague_baseline.splits import assert_classes_present
 
 
 @dataclass
@@ -95,11 +96,20 @@ def train_and_evaluate(
     label_col = "proxy_result_3way"
     complete = dataset["proxy_lineups_complete"].fillna(False)
     data = dataset.loc[complete].copy()
-    part = partition.loc[data.index]
+    part = partition.reindex(data.index)
+    if part.isna().any():
+        raise ValueError("Complete labeled rows are missing partition assignments")
+    unknown = set(part.unique()) - {"train", "calibration", "test"}
+    if unknown:
+        raise ValueError(f"Unknown partition labels: {sorted(unknown)}")
 
     train = data.loc[part == "train"]
     cal = data.loc[part == "calibration"]
     test = data.loc[part == "test"]
+    for name, frame in (("train", train), ("calibration", cal), ("test", test)):
+        if frame.empty:
+            raise ValueError(f"Partition {name} has no complete labeled rows")
+        assert_classes_present(frame[label_col], name)
 
     y_train = train[label_col].astype(str).tolist()
     y_cal = cal[label_col].astype(str).tolist()

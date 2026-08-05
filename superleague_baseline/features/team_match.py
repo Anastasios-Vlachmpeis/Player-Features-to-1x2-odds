@@ -71,6 +71,7 @@ def attach_opponent_metrics(team_matches: pd.DataFrame) -> pd.DataFrame:
         [
             "match_id",
             "player_team",
+            "lineup_complete",
             "gf_proxy",
             "xg_for",
             "xgot_for",
@@ -80,6 +81,7 @@ def attach_opponent_metrics(team_matches: pd.DataFrame) -> pd.DataFrame:
     ].rename(
         columns={
             "player_team": "opponent_team",
+            "lineup_complete": "opponent_lineup_complete",
             "gf_proxy": "ga_proxy",
             "xg_for": "xg_against",
             "xgot_for": "xgot_against",
@@ -88,12 +90,16 @@ def attach_opponent_metrics(team_matches: pd.DataFrame) -> pd.DataFrame:
         }
     )
     merged = team_matches.merge(opp, on=["match_id", "opponent_team"], how="left")
+    merged["match_lineups_complete"] = (
+        merged["lineup_complete"].fillna(False)
+        & merged["opponent_lineup_complete"].fillna(False)
+    )
     merged["points_proxy"] = merged.apply(_points_from_goals, axis=1)
     return merged
 
 
 def _points_from_goals(row) -> float | None:
-    if not row.get("lineup_complete") or pd.isna(row.get("ga_proxy")):
+    if not row.get("match_lineups_complete") or pd.isna(row.get("ga_proxy")):
         return None
     gf, ga = row["gf_proxy"], row["ga_proxy"]
     if gf > ga:

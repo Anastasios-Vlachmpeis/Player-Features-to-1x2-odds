@@ -16,6 +16,7 @@ from superleague_baseline.constants import DEFAULT_L5_WINDOW, DEFAULT_VENUE_L3_W
 class _HistoryRow:
     match_date: pd.Timestamp
     venue: str
+    match_lineups_complete: bool
     points_proxy: float | None
     gf_proxy: float
     ga_proxy: float
@@ -86,6 +87,7 @@ def _side_features(history: list[_HistoryRow], venue: str, l5: int, l3: int) -> 
     rest_days = None  # filled by caller with target date
 
     l5_rows = history[-l5:]
+    lineup_rows = [r for r in l5_rows if r.match_lineups_complete]
     xg_bal = [
         (r.xg_for - r.xg_against)
         if r.xg_for is not None and r.xg_against is not None
@@ -100,44 +102,49 @@ def _side_features(history: list[_HistoryRow], venue: str, l5: int, l3: int) -> 
     ]
 
     pass_comp = _ratio(
-        sum(r.passes_completed for r in l5_rows),
-        sum(r.passes_attempted for r in l5_rows),
+        sum(r.passes_completed for r in lineup_rows),
+        sum(r.passes_attempted for r in lineup_rows),
     )
     aerial_ratio = _ratio(
-        sum(r.aerial_won for r in l5_rows),
-        sum(r.aerial_total for r in l5_rows),
+        sum(r.aerial_won for r in lineup_rows),
+        sum(r.aerial_total for r in lineup_rows),
     )
-    rating_den = sum(r.rating_den for r in l5_rows)
-    rating_weighted = _ratio(sum(r.rating_num for r in l5_rows), rating_den)
+    rating_den = sum(r.rating_den for r in lineup_rows)
+    rating_weighted = _ratio(sum(r.rating_num for r in lineup_rows), rating_den)
 
     venue_rows = [r for r in history if r.venue == venue][-l3:]
+    venue_lineup_rows = [r for r in venue_rows if r.match_lineups_complete]
 
     return {
         "history_n": len(history),
         "rest_days": rest_days,
-        "lineup_for_l5_obs": len(l5_rows),
-        "points_proxy_l5_mean": _mean_last_n([r.points_proxy for r in l5_rows], l5),
-        "gf_proxy_l5_mean": _mean_last_n([r.gf_proxy for r in l5_rows], l5),
-        "ga_proxy_l5_mean": _mean_last_n([r.ga_proxy for r in l5_rows], l5),
+        "lineup_for_l5_obs": len(lineup_rows),
+        "points_proxy_l5_mean": _mean_last_n([r.points_proxy for r in lineup_rows], l5),
+        "gf_proxy_l5_mean": _mean_last_n([r.gf_proxy for r in lineup_rows], l5),
+        "ga_proxy_l5_mean": _mean_last_n([r.ga_proxy for r in lineup_rows], l5),
         "xg_for_l5_mean": _mean_last_n([r.xg_for for r in l5_rows], l5),
         "xg_against_l5_mean": _mean_last_n([r.xg_against for r in l5_rows], l5),
         "xg_balance_l5_mean": _mean_last_n(xg_bal, l5),
         "sot_for_l5_mean": _mean_last_n([r.sot_for for r in l5_rows], l5),
         "sot_against_l5_mean": _mean_last_n([r.sot_against for r in l5_rows], l5),
         "sot_balance_l5_mean": _mean_last_n(sot_bal, l5),
-        "key_passes_l5_mean": _mean_last_n([r.key_passes for r in l5_rows], l5),
+        "key_passes_l5_mean": _mean_last_n([r.key_passes for r in lineup_rows], l5),
         "pass_completion_l5_ratio": pass_comp,
-        "interceptions_l5_mean": _mean_last_n([r.interceptions for r in l5_rows], l5),
-        "clearances_l5_mean": _mean_last_n([r.clearances for r in l5_rows], l5),
+        "interceptions_l5_mean": _mean_last_n([r.interceptions for r in lineup_rows], l5),
+        "clearances_l5_mean": _mean_last_n([r.clearances for r in lineup_rows], l5),
         "aerial_win_l5_ratio": aerial_ratio,
         "rating_l5_minutes_weighted": rating_weighted,
-        "players_used_l5_mean": _mean_last_n([r.players_used for r in l5_rows], l5),
+        "players_used_l5_mean": _mean_last_n([r.players_used for r in lineup_rows], l5),
         "same_venue_history_n": len([r for r in history if r.venue == venue]),
         "points_proxy_same_venue_l3_mean": _mean_last_n(
-            [r.points_proxy for r in venue_rows], l3
+            [r.points_proxy for r in venue_lineup_rows], l3
         ),
-        "gf_proxy_same_venue_l3_mean": _mean_last_n([r.gf_proxy for r in venue_rows], l3),
-        "ga_proxy_same_venue_l3_mean": _mean_last_n([r.ga_proxy for r in venue_rows], l3),
+        "gf_proxy_same_venue_l3_mean": _mean_last_n(
+            [r.gf_proxy for r in venue_lineup_rows], l3
+        ),
+        "ga_proxy_same_venue_l3_mean": _mean_last_n(
+            [r.ga_proxy for r in venue_lineup_rows], l3
+        ),
         "xg_for_same_venue_l3_mean": _mean_last_n([r.xg_for for r in venue_rows], l3),
         "xg_against_same_venue_l3_mean": _mean_last_n(
             [r.xg_against for r in venue_rows], l3
@@ -149,6 +156,7 @@ def _row_to_history(row: pd.Series) -> _HistoryRow:
     return _HistoryRow(
         match_date=row["match_date"],
         venue=row["venue"],
+        match_lineups_complete=bool(row["match_lineups_complete"]),
         points_proxy=row["points_proxy"] if pd.notna(row.get("points_proxy")) else None,
         gf_proxy=float(row["gf_proxy"]),
         ga_proxy=float(row["ga_proxy"]),

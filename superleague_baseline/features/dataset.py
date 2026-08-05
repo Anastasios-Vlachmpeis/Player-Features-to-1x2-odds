@@ -19,6 +19,7 @@ from superleague_baseline.features.team_match import (
     attach_opponent_metrics,
     build_side_skeleton,
 )
+from superleague_baseline.features.validate import validate_no_future_leakage
 
 
 def _prefix_side(df: pd.DataFrame, side: str, prefix: str) -> pd.DataFrame:
@@ -72,6 +73,7 @@ def build_historical_match_dataset(
     )
     team_matches = attach_opponent_metrics(team_matches)
     team_features = compute_date_batched_features(team_matches)
+    validate_no_future_leakage(team_matches, team_features)
     match_features = pivot_one_row_per_match(team_features)
     targets = build_proxy_targets(team_matches)
     dataset = match_features.merge(targets, on=["match_id", "match_date", "home_team", "away_team"])

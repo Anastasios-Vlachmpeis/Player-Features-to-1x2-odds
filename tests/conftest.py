@@ -60,7 +60,7 @@ def synthetic_db(tmp_path: Path) -> Path:
                 for i in range(11):
                     rows.append(
                         (
-                            100 + i,
+                            100 + i + (0 if is_home else 1000),
                             match_id,
                             d,
                             home,
@@ -82,7 +82,19 @@ def synthetic_db(tmp_path: Path) -> Path:
                             "2026-01-01",
                         )
                     )
-                xg_rows.append((200, match_id, d, team, 1.0, 0.5, 5, 2, "2026-01-01"))
+                xg_rows.append(
+                    (
+                        200 + (0 if is_home else 1000),
+                        match_id,
+                        d,
+                        team,
+                        1.0,
+                        0.5,
+                        5,
+                        2,
+                        "2026-01-01",
+                    )
+                )
             match_id += 1
 
     conn.executemany(

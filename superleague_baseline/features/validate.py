@@ -23,24 +23,29 @@ def validate_no_future_leakage(
     team_matches: pd.DataFrame,
     team_features: pd.DataFrame,
 ) -> None:
-    merged = team_features.merge(
-        team_matches[
-            [
-                "match_id",
-                "player_team",
-                "gf_proxy",
-                "xg_for",
-                "points_proxy",
-            ]
-        ],
-        on=["match_id", "player_team"],
-        how="left",
-        suffixes=("", "_current"),
+    """Verify history counts include only fixtures from strictly earlier dates."""
+    keys = ["match_id", "match_date", "player_team"]
+    if team_features.duplicated(keys).any():
+        raise ValueError("Duplicate team feature rows")
+
+    date_counts = (
+        team_matches.groupby(["player_team", "match_date"], as_index=False)
+        .size()
+        .sort_values(["player_team", "match_date"])
     )
-    # Feature history count must be strictly less than total eventual matches for first appearance
-    first = merged.groupby("player_team")["history_n"].min()
-    if (first < 0).any():
-        raise ValueError("Negative history counts detected")
+    date_counts["expected_history_n"] = (
+        date_counts.groupby("player_team")["size"].cumsum() - date_counts["size"]
+    )
+    checked = team_features.merge(
+        date_counts[["player_team", "match_date", "expected_history_n"]],
+        on=["player_team", "match_date"],
+        how="left",
+        validate="many_to_one",
+    )
+    if checked["expected_history_n"].isna().any():
+        raise ValueError("Could not derive expected history count")
+    if not checked["history_n"].eq(checked["expected_history_n"]).all():
+        raise ValueError("Feature history includes current-date or future fixtures")
 
 
 def validate_probabilities(probs: pd.DataFrame) -> None:

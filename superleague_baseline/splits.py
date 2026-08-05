@@ -23,6 +23,10 @@ def assign_partition(
     train_end_d = pd.Timestamp(train_end)
     cal_end_d = pd.Timestamp(calibration_end)
     test_end_d = pd.Timestamp(test_end)
+    if not train_end_d < cal_end_d < test_end_d:
+        raise ValueError(
+            "Split boundaries must satisfy train_end < calibration_end < test_end"
+        )
 
     part = pd.Series(index=dataset.index, dtype="object")
     part[dates <= train_end_d] = "train"

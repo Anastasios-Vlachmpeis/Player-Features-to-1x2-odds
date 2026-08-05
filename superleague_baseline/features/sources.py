@@ -59,6 +59,7 @@ def load_sofascore_sources(db_path: str | Path) -> tuple[pd.DataFrame, pd.DataFr
 
 def build_fixture_index(lineup: pd.DataFrame) -> pd.DataFrame:
     """One row per match_id with canonical home/away metadata."""
+    _validate_lineup_fixture_rows(lineup)
     meta = (
         lineup.groupby("match_id", as_index=False)
         .agg(
@@ -70,3 +71,26 @@ def build_fixture_index(lineup: pd.DataFrame) -> pd.DataFrame:
         .reset_index(drop=True)
     )
     return meta
+
+
+def _validate_lineup_fixture_rows(lineup: pd.DataFrame) -> None:
+    """Reject incomplete or contradictory fixture metadata before aggregation."""
+    required = ["match_id", "match_date", "home_team", "away_team", "player_team"]
+    if lineup[required].isna().any().any():
+        raise ValueError("Lineup source contains null fixture metadata")
+
+    if lineup.duplicated(["match_id", "sofascore_id"]).any():
+        raise ValueError("Duplicate player rows found within a fixture")
+
+    grouped = lineup.groupby("match_id", sort=False)
+    inconsistent = grouped[["match_date", "home_team", "away_team"]].nunique(dropna=False)
+    bad_metadata = inconsistent.ne(1).any(axis=1)
+
+    expected_sides = grouped.apply(
+        lambda rows: set(rows["player_team"]) == {rows["home_team"].iloc[0], rows["away_team"].iloc[0]},
+        include_groups=False,
+    )
+    bad_ids = inconsistent.index[bad_metadata | ~expected_sides]
+    if len(bad_ids):
+        preview = bad_ids[:5].tolist()
+        raise ValueError(f"Inconsistent or incomplete fixture rows for match_id(s): {preview}")
