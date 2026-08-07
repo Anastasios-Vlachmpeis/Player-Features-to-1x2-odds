@@ -1,2 +1,5 @@
 undetected-chromedriver>=3.5.5
 selenium>=4.11.0
+requests>=2.32.0
+curl-cffi>=0.7.0
+beautifulsoup4>=4.12.0

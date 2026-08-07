@@ -16,11 +16,11 @@ Evaluation targets:
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| Sofascore ingestion | Done | ~236 fixtures, lineups + shot-level xG in `player_stats.db` |
+| Sofascore ingestion | Current season ingested | Multi-season collector supports 2015/16--2025/26; historical backfill not yet run |
 | Leakage-safe features | Done | Date-batched lagged team form (`superleague_baseline`) |
 | Calibrated logistic baseline | Done | Train / cal / test split, 17 tests passing |
-| Official match results | Not in DB | Proxy labels from summed player goals only (exploratory) |
-| Closing odds benchmark | Planned | `odds.db` empty; use Football-Data / OddsPortal for history |
+| Official match results | Collector ready | Sofascore scores and Football-Data results are not backfilled until you run the collectors |
+| Closing odds benchmark | Collector ready | Football-Data closing/pre-closing distinction is stored explicitly in `odds.db` |
 | Greek bookmaker scrapers | Built, misconfigured | Stoiximan/Novibet pointed at Champions League for testing |
 | FBref advanced stats | Scraper exists | 0 rows ingested |
 | Transfermarkt | In DB | Exploration only — not used in baseline (snapshot leakage) |
@@ -34,6 +34,8 @@ odds.db                # Stoiximan / Novibet snapshots (forward collection)
 
 scrape_sofascore.py    # Greek Super League player match stats
 scrape_sofascore_xg.py # Per-match xG from Sofascore shotmaps
+scrape_historical_results_odds.py # Official results + historical 1X2 odds
+football_data_scraper.py          # Football-Data download and normalization logic
 scrape_fbref.py        # FBref advanced metrics (patchy Greek coverage)
 scrape_transfermarkt.py
 collect_odds.py        # Daily 1X2 odds from Greek bookmakers
@@ -60,6 +62,7 @@ pip install -r requirements.txt
 ```
 
 Scrapers are geo-restricted; a **Greece VPN** is required for Stoiximan and Novibet.
+The Sofascore and Football-Data historical collectors do not use Selenium.
 
 ## Baseline pipeline
 
@@ -85,10 +88,34 @@ Features use only matches **strictly before** each fixture date (same-day leakag
 
 ## Data collection
 
+Historical official results and odds for seasons 2015/16 through 2025/26:
+
 ```powershell
-python scrape_sofascore.py          # Refresh Sofascore lineups
-python scrape_sofascore_xg.py         # Refresh xG aggregates
-python collect_odds.py              # Snapshot upcoming Greek SL odds (after repointing scrapers)
+python scrape_historical_results_odds.py --start-year 2015 --end-year 2026
+```
+
+Historical Sofascore player statistics and shotmap xG for the same seasons:
+
+```powershell
+python scrape_sofascore.py --start-year 2015 --end-year 2026
+python scrape_sofascore_xg.py --start-year 2015 --end-year 2026
+```
+
+These commands are restart-safe because database writes are upserts. Run the
+base Sofascore command before the xG command; it also fills `sofascore_matches`
+with official scores. Older matches may lack lineup or shotmap data, which is
+logged and skipped rather than fabricated.
+
+For a smaller retry, combine a single-season range with dates:
+
+```powershell
+python scrape_sofascore.py --start-year 2020 --end-year 2021 --from 2020-09-01 --to 2021-06-30
+```
+
+Forward bookmaker snapshots remain separate:
+
+```powershell
+python collect_odds.py
 ```
 
 Before running `collect_odds.py`, set competition URLs back to **Greek Super League** in `stoiximan_scraper.py` and `novibet_scraper.py` (they currently target UEFA Champions League from scraper testing).
@@ -101,6 +128,8 @@ python -m pytest -q -m integration    # requires player_stats.db
 ```
 
 ## Design constraints
+
+- **Historical odds type is explicit** -- use only `odds_is_closing = 1` for the closing benchmark. Pre-closing fallbacks are stored but flagged and must not be mixed into that evaluation.
 
 - **No Transfermarkt in historical features** — current snapshots leak future information on past fixtures.
 - **Proxy labels only until official scores are ingested** — e.g. from [Football-Data.co.uk](https://www.football-data.co.uk/greecem.php) Greece CSVs (same 236-match season available).

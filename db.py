@@ -42,6 +42,79 @@ def insert_odds(rows):
     print(f"[db] Inserted {len(rows)} rows")
 
 
+def init_historical_results_odds_db() -> None:
+    """Create the Football-Data historical results and odds table."""
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS historical_results_odds (
+                source          TEXT NOT NULL,
+                season          TEXT NOT NULL,
+                division        TEXT,
+                match_date      TEXT NOT NULL,
+                home_team       TEXT NOT NULL,
+                away_team       TEXT NOT NULL,
+                full_time_home  INTEGER NOT NULL,
+                full_time_away  INTEGER NOT NULL,
+                result_3way     TEXT NOT NULL,
+                odds_source     TEXT,
+                odds_is_closing BOOLEAN NOT NULL DEFAULT 0,
+                home_odds       REAL,
+                draw_odds       REAL,
+                away_odds       REAL,
+                market_p_home   REAL,
+                market_p_draw   REAL,
+                market_p_away   REAL,
+                source_url      TEXT NOT NULL,
+                scraped_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (
+                    source, season, match_date, home_team, away_team
+                )
+            )
+        """)
+        conn.commit()
+
+
+def upsert_historical_results_odds(rows: list[dict]) -> None:
+    """Upsert normalized Football-Data result/odds records."""
+    if not rows:
+        return
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.executemany(
+            """
+            INSERT INTO historical_results_odds
+                (source, season, division, match_date, home_team, away_team,
+                 full_time_home, full_time_away, result_3way, odds_source,
+                 odds_is_closing, home_odds, draw_odds, away_odds,
+                 market_p_home, market_p_draw, market_p_away, source_url,
+                 scraped_at)
+            VALUES
+                (:source, :season, :division, :match_date, :home_team, :away_team,
+                 :full_time_home, :full_time_away, :result_3way, :odds_source,
+                 :odds_is_closing, :home_odds, :draw_odds, :away_odds,
+                 :market_p_home, :market_p_draw, :market_p_away, :source_url,
+                 CURRENT_TIMESTAMP)
+            ON CONFLICT(source, season, match_date, home_team, away_team)
+            DO UPDATE SET
+                division        = excluded.division,
+                full_time_home  = excluded.full_time_home,
+                full_time_away  = excluded.full_time_away,
+                result_3way     = excluded.result_3way,
+                odds_source     = excluded.odds_source,
+                odds_is_closing = excluded.odds_is_closing,
+                home_odds       = excluded.home_odds,
+                draw_odds       = excluded.draw_odds,
+                away_odds       = excluded.away_odds,
+                market_p_home   = excluded.market_p_home,
+                market_p_draw   = excluded.market_p_draw,
+                market_p_away   = excluded.market_p_away,
+                source_url      = excluded.source_url,
+                scraped_at      = CURRENT_TIMESTAMP
+            """,
+            rows,
+        )
+        conn.commit()
+
+
 # ---------------------------------------------------------------------------
 # Player stats DB (player_stats.db)
 # ---------------------------------------------------------------------------
@@ -132,6 +205,20 @@ def upsert_injuries(tm_id: int, injuries: list) -> None:
 def init_sofascore_db() -> None:
     with sqlite3.connect(PLAYER_DB_PATH) as conn:
         conn.execute("""
+            CREATE TABLE IF NOT EXISTS sofascore_matches (
+                match_id      INTEGER PRIMARY KEY,
+                season_id     INTEGER,
+                season_name   TEXT,
+                match_date    TEXT,
+                home_team     TEXT,
+                away_team     TEXT,
+                home_score    INTEGER,
+                away_score    INTEGER,
+                result_3way   TEXT,
+                scraped_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("""
             CREATE TABLE IF NOT EXISTS sofascore_players (
                 sofascore_id INTEGER,
                 player_name  TEXT,
@@ -163,6 +250,51 @@ def init_sofascore_db() -> None:
                 PRIMARY KEY (sofascore_id, match_id)
             )
         """)
+        conn.commit()
+
+
+def upsert_sofascore_matches(events: list[dict]) -> None:
+    """Store official fixture scores discovered by the Sofascore collector."""
+    if not events:
+        return
+
+    rows = []
+    for event in events:
+        home_score = event.get("home_score")
+        away_score = event.get("away_score")
+        if home_score is None or away_score is None:
+            result = None
+        elif home_score > away_score:
+            result = "H"
+        elif home_score < away_score:
+            result = "A"
+        else:
+            result = "D"
+        rows.append({**event, "result_3way": result})
+
+    with sqlite3.connect(PLAYER_DB_PATH) as conn:
+        conn.executemany(
+            """
+            INSERT INTO sofascore_matches
+                (match_id, season_id, season_name, match_date, home_team,
+                 away_team, home_score, away_score, result_3way, scraped_at)
+            VALUES
+                (:match_id, :season_id, :season_name, :match_date, :home_team,
+                 :away_team, :home_score, :away_score, :result_3way,
+                 CURRENT_TIMESTAMP)
+            ON CONFLICT(match_id) DO UPDATE SET
+                season_id   = excluded.season_id,
+                season_name = excluded.season_name,
+                match_date  = excluded.match_date,
+                home_team   = excluded.home_team,
+                away_team   = excluded.away_team,
+                home_score  = excluded.home_score,
+                away_score  = excluded.away_score,
+                result_3way = excluded.result_3way,
+                scraped_at  = CURRENT_TIMESTAMP
+            """,
+            rows,
+        )
         conn.commit()
 
 

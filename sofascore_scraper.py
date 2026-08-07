@@ -16,6 +16,7 @@ Public functions consumed by scrape_sofascore.py:
 import time
 import random
 import logging
+import re
 from datetime import datetime, date
 from typing import Optional
 
@@ -99,17 +100,73 @@ def _get_json(url: str, retries: int = 3) -> Optional[dict]:
 # Season + event discovery
 # ---------------------------------------------------------------------------
 
+def get_seasons() -> list[dict]:
+    """Return the Sofascore season catalogue for Super League 1."""
+    url = f"{API_BASE}/unique-tournament/{UNIQUE_TOURNAMENT_ID}/seasons"
+    data = _get_json(url)
+    if not data or not data.get("seasons"):
+        raise RuntimeError("Could not fetch seasons list from Sofascore")
+    return data["seasons"]
+
+
+def _season_years(season: dict) -> tuple[int, int] | None:
+    """Extract (start year, end year) from names such as ``2025/2026``."""
+    text = " ".join(
+        str(season.get(key, "")) for key in ("name", "year")
+    )
+    match = re.search(r"(20\d{2})\D+(20\d{2})", text)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+
+    short = re.search(r"\b(\d{2})\s*[/\-]\s*(\d{2})\b", text)
+    if short:
+        start = 2000 + int(short.group(1))
+        end = 2000 + int(short.group(2))
+        return start, end
+    return None
+
+
+def select_seasons(
+    seasons: list[dict], start_year: int, end_year: int
+) -> list[dict]:
+    """Select seasons fully contained in a calendar-year interval.
+
+    ``start_year=2015, end_year=2026`` selects 2015/16 through 2025/26.
+    This function is deliberately network-free so the selection can be tested.
+    """
+    if start_year >= end_year:
+        raise ValueError("start_year must be earlier than end_year")
+
+    selected = []
+    for season in seasons:
+        years = _season_years(season)
+        if years and years[0] >= start_year and years[1] <= end_year:
+            selected.append({**season, "start_year": years[0], "end_year": years[1]})
+    return sorted(selected, key=lambda item: item["start_year"])
+
+
+def get_seasons_between(start_year: int, end_year: int) -> list[dict]:
+    """Fetch and select seasons from ``start_year`` through ``end_year``."""
+    selected = select_seasons(get_seasons(), start_year, end_year)
+    if not selected:
+        raise RuntimeError(
+            f"No Sofascore seasons found between {start_year} and {end_year}"
+        )
+    log.info(
+        "Selected %d seasons: %s",
+        len(selected),
+        ", ".join(str(season.get("name")) for season in selected),
+    )
+    return selected
+
+
 def get_current_season_id() -> int:
     """Return the most recent season id for Super League 1.
 
     Endpoint: /unique-tournament/{id}/seasons
     The seasons list is newest-first, so element [0] is the current season.
     """
-    url = f"{API_BASE}/unique-tournament/{UNIQUE_TOURNAMENT_ID}/seasons"
-    data = _get_json(url)
-    if not data or not data.get("seasons"):
-        raise RuntimeError("Could not fetch seasons list from Sofascore")
-    season = data["seasons"][0]
+    season = get_seasons()[0]
     log.info("Current season: %s (id=%s)", season.get("name"), season["id"])
     return season["id"]
 
@@ -122,7 +179,13 @@ def _parse_date_arg(value) -> Optional[date]:
     return datetime.strptime(value, "%Y-%m-%d").date()
 
 
-def get_season_events(season_id: int, date_from=None, date_to=None) -> list:
+def get_season_events(
+    season_id: int,
+    date_from=None,
+    date_to=None,
+    *,
+    season_name: str | None = None,
+) -> list:
     """Return finished events for the season, optionally filtered by date range.
 
     Endpoint: /unique-tournament/{id}/season/{seasonId}/events/last/{page}
@@ -162,9 +225,13 @@ def get_season_events(season_id: int, date_from=None, date_to=None) -> list:
             events.append(
                 {
                     "match_id": ev["id"],
+                    "season_id": season_id,
+                    "season_name": season_name,
                     "match_date": ev_date.isoformat() if ev_date else None,
                     "home_team": ev.get("homeTeam", {}).get("name"),
                     "away_team": ev.get("awayTeam", {}).get("name"),
+                    "home_score": ev.get("homeScore", {}).get("current"),
+                    "away_score": ev.get("awayScore", {}).get("current"),
                 }
             )
 
