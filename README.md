@@ -21,29 +21,22 @@ Evaluation targets:
 | Calibrated logistic baseline | Done | Train / cal / test split, 17 tests passing |
 | Official match results | Collector ready | Sofascore scores and Football-Data results are not backfilled until you run the collectors |
 | Closing odds benchmark | Collector ready | Football-Data closing/pre-closing distinction is stored explicitly in `odds.db` |
-| Greek bookmaker scrapers | Built, misconfigured | Stoiximan/Novibet pointed at Champions League for testing |
-| FBref advanced stats | Scraper exists | 0 rows ingested |
-| Transfermarkt | In DB | Exploration only — not used in baseline (snapshot leakage) |
+| Player data ingest | Pivoting to TheStatsAPI | Legacy Sofascore collectors moved to `archive/sofascore/` |
+| Greek retail odds | Archived | Selenium Stoiximan/Novibet in `archive/retail-greek-bookmakers/` (forward-only) |
 | GNN / graph model | Not started | Deferred until labels + odds benchmark exist |
 
 ## Repository layout
 
 ```
-player_stats.db          # Sofascore lineups, xG, Transfermarkt (read-only for baseline)
-odds.db                # Stoiximan / Novibet snapshots (forward collection)
+player_stats.db          # Player lineups, xG (Sofascore today; TheStatsAPI planned)
+odds.db                  # Football-Data historical results + closing odds
 
-scrape_sofascore.py    # Greek Super League player match stats
-scrape_sofascore_xg.py # Per-match xG from Sofascore shotmaps
-scrape_historical_results_odds.py # Official results + historical 1X2 odds
+scrape_historical_results_odds.py # Official results + historical 1X2 odds (Football-Data)
 football_data_scraper.py          # Football-Data download and normalization logic
-scrape_fbref.py        # FBref advanced metrics (patchy Greek coverage)
-scrape_transfermarkt.py
-collect_odds.py        # Daily 1X2 odds from Greek bookmakers
 
-superleague_baseline/  # Feature pipeline, splits, calibrated models, CLI
-tests/                 # Contract, leakage, split, and integration tests
-graph_viz/             # Interactive squad graph explorer (Transfermarkt)
-Agent Summaries/       # Scraper endpoint notes and design docs
+superleague_baseline/    # Feature pipeline, splits, calibrated models, CLI
+tests/                   # Contract, leakage, split, and integration tests
+archive/                 # Retired scrapers (Sofascore, FBref, TM, retail bookmakers)
 ```
 
 ## Setup
@@ -54,15 +47,6 @@ Agent Summaries/       # Scraper endpoint notes and design docs
 py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install -e ".[test]"
 ```
-
-**Odds scrapers** (separate Selenium deps — see `requirements.txt`):
-
-```powershell
-pip install -r requirements.txt
-```
-
-Scrapers are geo-restricted; a **Greece VPN** is required for Stoiximan and Novibet.
-The Sofascore and Football-Data historical collectors do not use Selenium.
 
 ## Baseline pipeline
 
@@ -88,37 +72,13 @@ Features use only matches **strictly before** each fixture date (same-day leakag
 
 ## Data collection
 
-Historical official results and odds for seasons 2015/16 through 2025/26:
+Historical official results and closing odds (Football-Data G1) for seasons 2015/16 through 2025/26:
 
 ```powershell
 python scrape_historical_results_odds.py --start-year 2015 --end-year 2026
 ```
 
-Historical Sofascore player statistics and shotmap xG for the same seasons:
-
-```powershell
-python scrape_sofascore.py --start-year 2015 --end-year 2026
-python scrape_sofascore_xg.py --start-year 2015 --end-year 2026
-```
-
-These commands are restart-safe because database writes are upserts. Run the
-base Sofascore command before the xG command; it also fills `sofascore_matches`
-with official scores. Older matches may lack lineup or shotmap data, which is
-logged and skipped rather than fabricated.
-
-For a smaller retry, combine a single-season range with dates:
-
-```powershell
-python scrape_sofascore.py --start-year 2020 --end-year 2021 --from 2020-09-01 --to 2021-06-30
-```
-
-Forward bookmaker snapshots remain separate:
-
-```powershell
-python collect_odds.py
-```
-
-Before running `collect_odds.py`, set competition URLs back to **Greek Super League** in `stoiximan_scraper.py` and `novibet_scraper.py` (they currently target UEFA Champions League from scraper testing).
+Player-level ingest is moving to **TheStatsAPI**. Legacy Sofascore collectors live under `archive/sofascore/` (see `archive/README.md`).
 
 ## Tests
 
@@ -137,8 +97,7 @@ python -m pytest -q -m integration    # requires player_stats.db
 
 ## Roadmap
 
-1. Ingest **official results** and **closing odds** (Football-Data Greece CSV → join to Sofascore fixtures)
-2. Add **model vs market** evaluation to `superleague_baseline`
-3. Repoint and schedule **Greek bookmaker** odds collection for forward fixtures
-4. Ingest **FBref** where coverage exists
-5. **GNN** over player/team graphs once steps 1–2 are solid
+1. Ingest **official results** and **closing odds** (Football-Data, multi-league)
+2. Ingest **player data** via TheStatsAPI and join to Football-Data fixtures
+3. Add **model vs market** evaluation to `superleague_baseline`
+4. **GNN** over player/team graphs once steps 1–3 are solid
