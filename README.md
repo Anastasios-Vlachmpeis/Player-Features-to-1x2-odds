@@ -1,4 +1,4 @@
-# Greek Super League ~ player-level odds research
+# Medium-sized leagues based player-level odds research
 
 Research project to predict **1X2 match outcomes** for the Greek Super League from **player-level match data**, then benchmark against **bookmaker closing odds**. The long-term goal is a graph-based model (GNN); the current focus is a **leakage-safe baseline** and proper market comparison before adding complexity.
 
