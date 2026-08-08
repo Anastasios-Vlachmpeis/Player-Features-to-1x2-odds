@@ -20,8 +20,9 @@ ROLLING_APPEARANCES = 5
 EVENT_STATS = {
     "shooting.goals": "goals",
     "passing.assists": "assists",
-    "shooting.expected_goals": "xg",
-    "shooting.expected_assists": "xa",
+    # Scotland's expected_goals and expected_assists fields are constant zero.
+    # np_expected_goals is populated, and key passes remain a usable creation proxy.
+    "shooting.np_expected_goals": "npxg",
     "shooting.total_shots": "shots",
     "passing.key_passes": "key_passes",
     "goalkeeping.saves": "saves",
@@ -71,8 +72,7 @@ OUTPUT_COLUMNS = [
     "form_rating_mean_5",
     "form_goals_per90_5",
     "form_assists_per90_5",
-    "form_xg_per90_5",
-    "form_xa_per90_5",
+    "form_npxg_per90_5",
     "form_shots_per90_5",
     "form_key_passes_per90_5",
     "form_defensive_actions_per90_5",
@@ -281,8 +281,7 @@ def validate_starter_form(starters: pd.DataFrame, expected_match_ids: set[str]) 
         "form_rating_mean_5",
         "form_goals_per90_5",
         "form_assists_per90_5",
-        "form_xg_per90_5",
-        "form_xa_per90_5",
+        "form_npxg_per90_5",
         "form_shots_per90_5",
         "form_key_passes_per90_5",
         "form_defensive_actions_per90_5",
