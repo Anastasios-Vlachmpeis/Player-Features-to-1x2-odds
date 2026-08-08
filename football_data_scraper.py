@@ -1,4 +1,4 @@
-"""Historical Greek Super League results and 1X2 odds from Football-Data.
+"""Historical top-division results and 1X2 odds from Football-Data.
 
 The network-facing function is intentionally separate from CSV normalization so
 the parser can be tested without downloading anything.
@@ -14,8 +14,34 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 BASE_URL = "https://www.football-data.co.uk/mmz4281"
-DIVISION = "G1"
 SOURCE = "football-data.co.uk"
+
+# Football-Data division codes for target non-Big-5 top divisions.
+LEAGUES: dict[str, dict[str, str]] = {
+    "greece": {"division": "G1", "name": "Greece Super League"},
+    "turkey": {"division": "T1", "name": "Turkey Super Lig"},
+    "netherlands": {"division": "N1", "name": "Netherlands Eredivisie"},
+    "portugal": {"division": "P1", "name": "Portugal Primeira Liga"},
+    "belgium": {"division": "B1", "name": "Belgium Pro League"},
+    "scotland": {"division": "SC0", "name": "Scotland Premiership"},
+}
+
+DEFAULT_LEAGUE_KEYS: tuple[str, ...] = tuple(LEAGUES)
+
+
+def resolve_league_keys(keys: list[str] | None = None) -> list[str]:
+    """Validate league keys and return them in registry order."""
+    selected = list(keys) if keys else list(DEFAULT_LEAGUE_KEYS)
+    unknown = [key for key in selected if key not in LEAGUES]
+    if unknown:
+        known = ", ".join(DEFAULT_LEAGUE_KEYS)
+        raise ValueError(f"Unknown league key(s): {', '.join(unknown)}. Known: {known}")
+    # Preserve registry order regardless of CLI ordering.
+    return [key for key in DEFAULT_LEAGUE_KEYS if key in selected]
+
+
+def league_division(league_key: str) -> str:
+    return LEAGUES[league_key]["division"]
 
 # Prefer a market-average close. Older files may only expose Pinnacle closing
 # or pre-closing prices. The selected type is always retained in odds_source and
@@ -44,8 +70,8 @@ def season_label(start_year: int, end_year: int) -> str:
     return f"{start_year}-{end_year % 100:02d}"
 
 
-def season_url(start_year: int, end_year: int) -> str:
-    return f"{BASE_URL}/{season_code(start_year, end_year)}/{DIVISION}.csv"
+def season_url(start_year: int, end_year: int, division: str) -> str:
+    return f"{BASE_URL}/{season_code(start_year, end_year)}/{division}.csv"
 
 
 def iter_seasons(start_year: int, end_year: int):
@@ -62,11 +88,12 @@ def iter_seasons(start_year: int, end_year: int):
 def fetch_season_csv(
     start_year: int,
     end_year: int,
+    division: str,
     *,
     retries: int = 3,
 ) -> tuple[str, str]:
     """Download one season and return ``(decoded_csv, source_url)``."""
-    url = season_url(start_year, end_year)
+    url = season_url(start_year, end_year, division)
     headers = {
         "User-Agent": "SuperLeagueResearch/1.0 (historical academic download)",
         "Accept": "text/csv,text/plain,*/*",
@@ -133,11 +160,12 @@ def parse_season_csv(
     *,
     start_year: int,
     end_year: int,
+    division: str,
     source_url: str | None = None,
 ) -> list[dict]:
     """Normalize official scores and the best available 1X2 odds per match."""
     label = season_label(start_year, end_year)
-    url = source_url or season_url(start_year, end_year)
+    url = source_url or season_url(start_year, end_year, division)
     reader = csv.DictReader(io.StringIO(csv_text.lstrip("\ufeff")))
     rows = []
 
@@ -171,7 +199,7 @@ def parse_season_csv(
             {
                 "source": SOURCE,
                 "season": label,
-                "division": (row.get("Div") or DIVISION).strip(),
+                "division": (row.get("Div") or division).strip(),
                 "match_date": _parse_date(raw_date),
                 "home_team": home,
                 "away_team": away,

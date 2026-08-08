@@ -72,10 +72,17 @@ Features use only matches **strictly before** each fixture date (same-day leakag
 
 ## Data collection
 
-Historical official results and closing odds (Football-Data G1) for seasons 2015/16 through 2025/26:
+Historical official results and closing odds (Football-Data) for Greece, Turkey,
+Netherlands, Portugal, Belgium, and Scotland (seasons 2015/16 through 2025/26 by default):
 
 ```powershell
 python scrape_historical_results_odds.py --start-year 2015 --end-year 2026
+```
+
+Download a subset of leagues:
+
+```powershell
+python scrape_historical_results_odds.py --leagues greece turkey netherlands
 ```
 
 Player-level ingest is moving to **TheStatsAPI**. Legacy Sofascore collectors live under `archive/sofascore/` (see `archive/README.md`).
