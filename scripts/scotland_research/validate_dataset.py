@@ -1,6 +1,5 @@
 #Validate the local Scotland match and player-stat backfill
 
-
 from __future__ import annotations
 
 import argparse
