@@ -24,6 +24,7 @@ superleague_baseline/modeling/metrics.py
 superleague_baseline/modeling/train.py
 tests/test_cli.py
 tests/test_data_contract.py
+tests/test_historical_scrapers.py
 tests/test_player_stats_db.py
 tests/test_split_calibration.py
 tests/test_temporal_features.py
