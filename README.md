@@ -1,6 +1,6 @@
 # Medium-sized leagues based player-level odds research
 
-Research project to predict **1X2 match outcomes** for the Greek Super League from **player-level match data**, then benchmark against **bookmaker closing odds**. The long-term goal is a graph-based model (GNN); the current focus is a **leakage-safe baseline** and proper market comparison before adding complexity.
+Research project to predict **1X2 match outcomes** for the Greek Super League from **player-level match data**, then benchmark against **bookmaker closing odds**. The current focus is a **leakage-safe baseline** and proper market comparison.
 
 ## Research question
 
@@ -10,7 +10,6 @@ Evaluation targets:
 
 - Log loss and Brier score vs a class prior and vs **closing implied probabilities**
 - Calibration on a held-out time slice
-- Eventually: comparison to Stoiximan / Novibet retail lines (forward collection)
 
 ## Current status
 
@@ -22,8 +21,6 @@ Evaluation targets:
 | Official match results | Collector ready | Sofascore scores and Football-Data results are not backfilled until you run the collectors |
 | Closing odds benchmark | Collector ready | Football-Data closing/pre-closing distinction is stored explicitly in `odds.db` |
 | Player data ingest | Pivoting to TheStatsAPI | Legacy Sofascore collectors moved to `archive/sofascore/` |
-| Greek retail odds | Archived | Selenium Stoiximan/Novibet in `archive/retail-greek-bookmakers/` (forward-only) |
-| GNN / graph model | Not started | Deferred until labels + odds benchmark exist |
 
 ## Repository layout
 
@@ -36,7 +33,7 @@ football_data_scraper.py          # Football-Data download and normalization log
 
 superleague_baseline/    # Feature pipeline, splits, calibrated models, CLI
 tests/                   # Contract, leakage, split, and integration tests
-archive/                 # Retired scrapers (Sofascore, FBref, TM, retail bookmakers)
+archive/                 # Retired Sofascore collectors
 ```
 
 ## Setup
@@ -98,13 +95,11 @@ python -m pytest -q -m integration    # requires player_stats.db
 
 - **Historical odds type is explicit** -- use only `odds_is_closing = 1` for the closing benchmark. Pre-closing fallbacks are stored but flagged and must not be mixed into that evaluation.
 
-- **No Transfermarkt in historical features** — current snapshots leak future information on past fixtures.
 - **Proxy labels only until official scores are ingested** — e.g. from [Football-Data.co.uk](https://www.football-data.co.uk/greecem.php) Greece CSVs (same 236-match season available).
-- **Closing odds for backtests** — bookmakers do not publish historical closes; use Football-Data (`B365CH/D/A`, `AvgCH/D/A`, `PSCH/D/A`) or OddsPortal archives, not live Stoiximan/Novibet scrapes alone.
+- **Closing odds for backtests** — use Football-Data (`B365CH/D/A`, `AvgCH/D/A`, `PSCH/D/A`) or another historical archive.
 
 ## Roadmap
 
 1. Ingest **official results** and **closing odds** (Football-Data, multi-league)
 2. Ingest **player data** via TheStatsAPI and join to Football-Data fixtures
 3. Add **model vs market** evaluation to `superleague_baseline`
-4. **GNN** over player/team graphs once steps 1–3 are solid

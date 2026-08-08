@@ -28,7 +28,6 @@ def run_audit(db_path: str | Path) -> dict:
         tackles_nonzero = conn.execute(
             "SELECT COUNT(*) FROM sofascore_match_stats WHERE tackles != 0"
         ).fetchone()[0]
-        fbref_rows = conn.execute("SELECT COUNT(*) FROM fbref_match_stats").fetchone()[0]
 
     dataset = build_historical_match_dataset(db_path)
     partition = assign_partition(dataset)
@@ -52,8 +51,6 @@ def run_audit(db_path: str | Path) -> dict:
         },
         "warnings": [
             "No official match scores stored; proxy labels only.",
-            "Transfermarkt snapshots are not safe for historical features.",
             f"tackles_nonzero_rows={tackles_nonzero} (field excluded from features).",
-            f"fbref_rows={fbref_rows}.",
         ],
     }
