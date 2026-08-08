@@ -13,3 +13,4 @@ archive/**/node_modules/
 archive/**/dist/
 data/
 __pycache__/
+.env
