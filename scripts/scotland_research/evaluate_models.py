@@ -23,6 +23,9 @@ DEFAULT_EVALUATION_DIR = PROJECT_ROOT / "artifacts" / "scotland_model_evaluation
 CLASS_ORDER = ["H", "D", "A"]
 PLAYER_FEATURES = [f"diff_{feature}" for feature in TEAM_FEATURES]
 MARKET_FEATURES = ["market_log_home_vs_draw", "market_log_away_vs_draw"]
+# Fixed research thresholds: at most 1% worse is very close; at most 2% worse is close.
+VERY_CLOSE_THRESHOLD = 0.01
+CLOSE_THRESHOLD = 0.02
 FOLDS = [
     ("2022-23", ["2020-21", "2021-22"]),
     ("2023-24", ["2020-21", "2021-22", "2022-23"]),
@@ -169,6 +172,55 @@ def score_predictions(actual: pd.Series, probabilities: np.ndarray) -> dict[str,
     }
 
 
+def market_comparison_label(model: str, relative_difference: float) -> str:
+    if model == "closing_market":
+        return "baseline"
+    if relative_difference < 0:
+        return "outperforms_market"
+    if relative_difference <= VERY_CLOSE_THRESHOLD:
+        return "within_1_percent"
+    if relative_difference <= CLOSE_THRESHOLD:
+        return "within_2_percent"
+    return "worse_by_more_than_2_percent"
+
+
+def add_market_comparison(
+    metrics: pd.DataFrame,
+    group_column: str | None = None,
+) -> pd.DataFrame:
+    compared = metrics.copy()
+    if group_column is None:
+        market_rows = compared[compared["model"].eq("closing_market")]
+        if len(market_rows) != 1:
+            raise ValueError("Overall metrics must contain one closing-market row")
+        compared["closing_market_log_loss"] = market_rows["log_loss"].iloc[0]
+    else:
+        market_rows = compared[compared["model"].eq("closing_market")]
+        market_by_group = market_rows.set_index(group_column)["log_loss"]
+        if market_by_group.index.duplicated().any():
+            raise ValueError(f"Multiple closing-market rows for {group_column}")
+        compared["closing_market_log_loss"] = compared[group_column].map(market_by_group)
+        if compared["closing_market_log_loss"].isna().any():
+            raise ValueError(f"A {group_column} group has no closing-market row")
+
+    compared["log_loss_vs_closing_market"] = (
+        compared["log_loss"] - compared["closing_market_log_loss"]
+    )
+    compared["log_loss_relative_to_closing_market"] = (
+        compared["log_loss_vs_closing_market"]
+        / compared["closing_market_log_loss"]
+    )
+    compared["market_comparison"] = [
+        market_comparison_label(model, relative_difference)
+        for model, relative_difference in zip(
+            compared["model"],
+            compared["log_loss_relative_to_closing_market"],
+            strict=True,
+        )
+    ]
+    return compared
+
+
 def coefficient_rows(
     model: object,
     model_name: str,
@@ -269,7 +321,10 @@ def evaluate(dataset: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.Data
             )
         )
 
-    fold_metrics = pd.DataFrame(metric_rows)
+    fold_metrics = add_market_comparison(
+        pd.DataFrame(metric_rows),
+        group_column="test_season",
+    )
     predictions = pd.concat(prediction_frames, ignore_index=True)
     coefficients = pd.DataFrame(coefficient_output)
 
@@ -284,12 +339,7 @@ def evaluate(dataset: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.Data
             }
         )
     overall_metrics = pd.DataFrame(overall_rows)
-    market_log_loss = overall_metrics.loc[
-        overall_metrics["model"].eq("closing_market"), "log_loss"
-    ].iloc[0]
-    overall_metrics["log_loss_vs_closing_market"] = (
-        overall_metrics["log_loss"] - market_log_loss
-    )
+    overall_metrics = add_market_comparison(overall_metrics)
     overall_metrics = overall_metrics.sort_values("log_loss", kind="stable").reset_index(drop=True)
     return fold_metrics, overall_metrics, predictions, coefficients
 
