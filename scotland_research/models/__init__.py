@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from constants import PLAYER_FEATURES
 from models.base import MatchPredictor
 from models.closing_market import ClosingMarket
 from models.dixon_coles import DixonColesModel
@@ -9,6 +10,32 @@ from models.dixon_coles_player_form import DixonColesPlayerFormModel
 from models.frequency_baseline import FrequencyBaseline
 from models.market_plus_player_form import MarketPlusPlayerFormModel
 from models.player_form import PlayerFormModel
+
+
+PLAYER_FEATURE_GROUPS = {
+    "shooting": [
+        "diff_npxg_per90_sum_5",
+        "diff_shots_per90_sum_5",
+    ],
+    "chance_creation": [
+        "diff_key_passes_per90_sum_5",
+    ],
+    "defending": [
+        "diff_defensive_actions_per90_sum_5",
+    ],
+    "ratings": [
+        "diff_rating_mean_5",
+    ],
+    "recent_experience": [
+        "diff_recent_minutes_sum_5",
+    ],
+    "history_coverage": [
+        "diff_starters_without_history",
+        "diff_starters_without_full_window",
+    ],
+}
+
+FULL_PLAYER_MODEL_NAME = "market_plus_all_player_features"
 
 
 def all_predictors() -> list[MatchPredictor]:
@@ -20,3 +47,28 @@ def all_predictors() -> list[MatchPredictor]:
         PlayerFormModel(),
         MarketPlusPlayerFormModel(),
     ]
+
+
+def models_for_player_feature_removal_test() -> list[MatchPredictor]:
+    #Compare the full market/player model with one player group removed at a time
+    
+    models: list[MatchPredictor] = [
+        ClosingMarket(),
+        MarketPlusPlayerFormModel(
+            player_features=PLAYER_FEATURES,
+            name=FULL_PLAYER_MODEL_NAME,
+        ),
+    ]
+
+    for group_name, columns_to_remove in PLAYER_FEATURE_GROUPS.items():
+        
+        remaining_columns = [column for column in PLAYER_FEATURES if column not in columns_to_remove]
+        
+        models.append(
+            MarketPlusPlayerFormModel(
+                player_features=remaining_columns,
+                name=f"market_without_{group_name}",
+            )
+        )
+
+    return models
