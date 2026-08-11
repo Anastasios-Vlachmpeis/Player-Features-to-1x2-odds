@@ -11,13 +11,41 @@ from models.logistic import (
     fit_logistic_model,
 )
 
+FEATURE_GROUPS = {
+    "shooting": [
+        "diff_npxg_per90_sum_5",
+        "diff_shots_per90_sum_5",
+    ],
+    "chance_creation": [
+        "diff_key_passes_per90_sum_5",
+    ],
+    "defending": [
+        "diff_defensive_actions_per90_sum_5",
+    ],
+    "ratings": [
+        "diff_rating_mean_5",
+    ],
+    "recent_experience": [
+        "diff_recent_minutes_sum_5",
+    ],
+    "history_coverage": [
+        "diff_starters_without_history",
+        "diff_starters_without_full_window",
+    ],
+}
 
 class MarketPlusPlayerFormModel:
     name = "market_plus_player_form"
 
-    def __init__(self) -> None:
+    def __init__(self, player_features=None, name="market_plus_player_form") -> None:
+        selected = (
+            PLAYER_FEATURES
+            if player_features is None
+            else list(player_features)
+        )
         self._fitted_model: object | None = None
-        self._feature_columns = MARKET_FEATURES + PLAYER_FEATURES
+        self._feature_columns = MARKET_FEATURES + selected
+        self.name = name
 
     def fit(self, train: pd.DataFrame) -> None:
         self._fitted_model = fit_logistic_model(train, self._feature_columns)
