@@ -18,3 +18,4 @@ __pycache__/
 .env
 .codex_spreadsheet_verify/
 tests/
+archive/
