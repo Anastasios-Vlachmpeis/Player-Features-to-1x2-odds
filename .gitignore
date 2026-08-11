@@ -12,6 +12,8 @@ DONTTOUCH/
 archive/**/node_modules/
 archive/**/dist/
 data/
+!scripts/scotland_research/data/
+!scripts/scotland_research/data/*.py
 __pycache__/
 .env
 .codex_spreadsheet_verify/
