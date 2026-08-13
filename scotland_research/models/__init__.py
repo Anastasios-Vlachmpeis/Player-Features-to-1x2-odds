@@ -51,24 +51,15 @@ def all_predictors() -> list[MatchPredictor]:
 
 def models_for_player_feature_removal_test() -> list[MatchPredictor]:
     #Compare the full market/player model with one player group removed at a time
-    
+
     models: list[MatchPredictor] = [
         ClosingMarket(),
-        MarketPlusPlayerFormModel(
-            player_features=PLAYER_FEATURES,
-            name=FULL_PLAYER_MODEL_NAME,
-        ),
+        MarketPlusPlayerFormModel(player_features=PLAYER_FEATURES,name=FULL_PLAYER_MODEL_NAME,),
     ]
 
     for group_name, columns_to_remove in PLAYER_FEATURE_GROUPS.items():
         
         remaining_columns = [column for column in PLAYER_FEATURES if column not in columns_to_remove]
-        
-        models.append(
-            MarketPlusPlayerFormModel(
-                player_features=remaining_columns,
-                name=f"market_without_{group_name}",
-            )
-        )
+        models.append(MarketPlusPlayerFormModel(player_features=remaining_columns,name=f"market_without_{group_name}"))
 
     return models

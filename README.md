@@ -1,105 +1,118 @@
-# Medium-sized leagues based player-level odds research
+# Medium-Large European Leagues player-form odds research
 
-Research project to predict **1X2 match outcomes** for the Greek Super League from **player-level match data**, then benchmark against **bookmaker closing odds**. The current focus is a **leakage-safe baseline** and proper market comparison.
+Research project testing whether recent player-level performance improves medium-large European prime leagues 1X2 predictions (currently Scottish Premiership only, to be extended to work with 5 more leagues), either on its own or when added to bookmaker closing probabilities.
 
-## Research question
+The active work is a leakage-safe, walk-forward comparison across the 2020/21 to 2024/25 seasons. The main question is whether information from the announced starters' previous appearances adds predictive value beyond the closing market.
 
-Can player-level features (lineups, ratings, xG, form) produce calibrated 1X2 probabilities that **beat the market** on out-of-sample fixtures?
+## Current experiment
 
-Evaluation targets:
+The current modelling dataset joins:
 
-- Log loss and Brier score vs a class prior and vs **closing implied probabilities**
-- Calibration on a held-out time slice
+- (Scottish) match results and player-match statistics from TheStatsAPI
+- Historical 1X2 closing odds from Football-Data.co.uk, stored in `odds.db`
+- Rolling player form calculated only from appearances before each target match
 
-## Current status
+For every starter, form is calculated over their previous (five) appearances. The starter-level values are then aggregated into home-team, away-team, and home-minus-away features for:
 
-| Layer | Status | Notes |
-|-------|--------|-------|
-| Sofascore ingestion | Current season ingested | Multi-season collector supports 2015/16--2025/26; historical backfill not yet run |
-| Leakage-safe features | Done | Date-batched lagged team form (`superleague_baseline`) |
-| Calibrated logistic baseline | Done | Train / cal / test split, 17 tests passing |
-| Official match results | Collector ready | Sofascore scores and Football-Data results are not backfilled until you run the collectors |
-| Closing odds benchmark | Collector ready | Football-Data closing/pre-closing distinction is stored explicitly in `odds.db` |
-| Player data ingest | Pivoting to TheStatsAPI | Legacy Sofascore collectors moved to `archive/sofascore/` |
+- non-penalty expected goals
+- shots
+- key passes
+- tackles plus interceptions
+- average player rating
+- recent minutes
+- availability of prior player history
+
+The Scotland export has no useful variation in its xG and xA fields, so we use populated non-penalty xG and key passes instead.
+
+## Evaluation design
+
+Models are evaluated out of sample with expanding training windows:
+
+| Test season | Training seasons |
+|---|---|
+| 2022/23 | 2020/21–2021/22 |
+| 2023/24 | 2020/21–2022/23 |
+| 2024/25 | 2020/21–2023/24 |
+
+The comparison includes:
+
+- historical result-frequency baseline
+- Dixon–Coles score model
+- Dixon–Coles with player-form adjustments
+- player-form multinomial model
+- bookmaker closing market
+- closing market plus player-form features
+
+Performance is reported with log loss, Brier score, and accuracy. Log loss is the main comparison, with every model measured directly against the closing market.
+
+The current combined evaluation covers 665 out-of-sample matches. In the latest saved results, the closing market has the best log loss (0.918), with the strongest non-market model being Dixon–Coles (0.937). We are currently identifying whether particular groups of player features help or hurt the market-plus-player model.
 
 ## Repository layout
 
-```
-player_stats.db          # Player lineups, xG (Sofascore today; TheStatsAPI planned)
-odds.db                  # Football-Data historical results + closing odds
+```text
+scotland_research/
+  validate_dataset.py                 Validate match, odds, lineup, and player coverage
+  build_match_dataset.py              Join clean matches, results, and closing odds
+  build_player_form.py                Build prior-five-appearance starter form
+  build_match_features.py             Aggregate player form to match-level features
+  evaluate_models.py                  Run the main walk-forward model comparison
+  evaluate_player_feature_removal.py  Remove one player feature group at a time
+  models/                             Market, logistic, and Dixon–Coles predictors
+  evaluation/                         Walk-forward scoring and reports
+  exploration_validation_notebooks    Notebooks used to explore and validate the data  
 
-scrape_historical_results_odds.py # Official results + historical 1X2 odds (Football-Data)
-football_data_scraper.py          # Football-Data download and normalization logic
+statsapi_scripts/
+  statsapi_scotland/                   Scotland match and player-stat collection
+  statsapi_remaining_leagues/          Collection work for the other target leagues
 
-superleague_baseline/    # Feature pipeline, splits, calibrated models, CLI
-tests/                   # Contract, leakage, split, and integration tests
-archive/                 # Retired Sofascore collectors
+scrapers/                              Football-Data results and odds ingestion
+data/processed/scotland/               Generated modelling tables
+artifacts/                             Generated validation and evaluation reports
+odds.db                                Historical results and odds database
 ```
 
 ## Setup
 
-**Modeling pipeline** (Python 3.12+):
+Python 3.12 or newer is recommended.
 
 ```powershell
 py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install -e ".[test]"
 ```
 
-## Baseline pipeline
+To collect Scotland data, put the API key in `.env`:
 
-Audit the database, build match-level features, and train a calibrated multinomial logistic model:
-
-```powershell
-python -m superleague_baseline audit --db player_stats.db
-python -m superleague_baseline build-features --db player_stats.db
-python -m superleague_baseline train-evaluate --db player_stats.db --label-source player-goals-proxy
+```text
+THESTATSAPI_KEY=your_key_here
 ```
 
-Outputs land in `artifacts/` (`match_features.csv`, `baseline_run/predictions.csv`, `metrics.json`).
-
-**Important:** `--label-source player-goals-proxy` is required today because official FT scores are not stored in `player_stats.db`. Metrics from proxy labels are sanity checks only, not publishable results.
-
-Default chronological split:
-
-- Train through **2026-01-31**
-- Calibration through **2026-03-31**
-- Test through **2026-05-21**
-
-Features use only matches **strictly before** each fixture date (same-day leakage guarded in tests).
-
-## Data collection
-
-Historical official results and closing odds (Football-Data) for Greece, Turkey,
-Netherlands, Portugal, Belgium, and Scotland (seasons 2015/16 through 2025/26 by default):
+Then run the match collector followed by the resumable player-stat collector:
 
 ```powershell
-python scrape_historical_results_odds.py --start-year 2015 --end-year 2026
+.venv\Scripts\python statsapi_scripts\statsapi_scotland\fetch_matches.py
+.venv\Scripts\python statsapi_scripts\statsapi_scotland\fetch_player_stats.py
 ```
 
-Download a subset of leagues:
+## Run the current evaluations
+
+With `data/processed/scotland/scotland_model_dataset.csv` already built:
 
 ```powershell
-python scrape_historical_results_odds.py --leagues greece turkey netherlands
+$repo = (Get-Location).Path
+
+.venv\Scripts\python scotland_research\evaluate_models.py `
+  --model-dataset "$repo\data\processed\scotland\scotland_model_dataset.csv" `
+  --output-dir "$repo\artifacts\scotland_model_evaluation"
+
+.venv\Scripts\python scotland_research\evaluate_player_feature_removal.py
 ```
 
-Player-level ingest is moving to **TheStatsAPI**. Legacy Sofascore collectors live under `archive/sofascore/` (see `archive/README.md`).
+The main evaluation writes fold metrics, overall metrics, match predictions, and fitted feature coefficients. The feature-removal evaluation compares the complete market-plus-player model with variants that remove shooting, chance creation, defending, ratings, recent experience, or history-coverage features.
 
-## Tests
+## Data safeguards
 
-```powershell
-python -m pytest -q -m "not integration"
-python -m pytest -q -m integration    # requires player_stats.db
-```
-
-## Design constraints
-
-- **Historical odds type is explicit** -- use only `odds_is_closing = 1` for the closing benchmark. Pre-closing fallbacks are stored but flagged and must not be mixed into that evaluation.
-
-- **Proxy labels only until official scores are ingested** — e.g. from [Football-Data.co.uk](https://www.football-data.co.uk/greecem.php) Greece CSVs (same 236-match season available).
-- **Closing odds for backtests** — use Football-Data (`B365CH/D/A`, `AvgCH/D/A`, `PSCH/D/A`) or another historical archive.
-
-## Roadmap
-
-1. Ingest **official results** and **closing odds** (Football-Data, multi-league)
-2. Ingest **player data** via TheStatsAPI and join to Football-Data fixtures
-3. Add **model vs market** evaluation to `superleague_baseline`
+- Rolling form excludes the current match and uses only earlier appearances.
+- Each modelling fixture must have exactly 11 identified starters per team.
+- Match scores must agree between TheStatsAPI and Football-Data.
+- Only rows explicitly identified as closing odds are used for the market benchmark.
+- Fixtures that fail validation are recorded separately instead of silently entering the model.
