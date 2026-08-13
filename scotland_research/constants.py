@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from build_match_features import MODEL_DATASET_NAME, TEAM_FEATURES
+from build_match_features import TEAM_FEATURES
 from build_match_dataset import DEFAULT_OUTPUT_DIR
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_MODEL_DATASET = DEFAULT_OUTPUT_DIR / MODEL_DATASET_NAME
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_MODEL_DATASET = DEFAULT_OUTPUT_DIR / "scotland_model_dataset.csv"
 DEFAULT_EVALUATION_DIR = PROJECT_ROOT / "artifacts" / "scotland_model_evaluation"
 
 CLASS_ORDER = ["H", "D", "A"]

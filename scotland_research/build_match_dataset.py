@@ -10,7 +10,7 @@ import pandas as pd
 from validate_dataset import build_match_validation, load_inputs
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "processed" / "scotland"
 MATCH_DATASET_NAME = "matches_with_closing_odds.csv"
 EXCLUSIONS_NAME = "excluded_matches.csv"
