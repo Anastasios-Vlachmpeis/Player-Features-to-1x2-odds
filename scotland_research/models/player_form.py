@@ -16,7 +16,10 @@ from models.logistic import (
 class PlayerFormModel:
     name = "player_form"
 
-    def __init__(self) -> None:
+    def __init__(self, player_features=None, name="player_form") -> None:
+
+        self._feature_columns = (PLAYER_FEATURES if player_features is None else list(player_features))
+        self.name = name
         self._fitted_model: object | None = None
 
     def fit(self, train: pd.DataFrame) -> None:
@@ -30,11 +33,5 @@ class PlayerFormModel:
     def export_coefficients(self, test_season: str) -> pd.DataFrame | None:
         if self._fitted_model is None:
             return None
-        return pd.DataFrame(
-            coefficient_rows(
-                self._fitted_model,
-                self.name,
-                test_season,
-                PLAYER_FEATURES,
-            )
-        )
+
+        return pd.DataFrame(coefficient_rows(self._fitted_model, self.name, test_season, PLAYER_FEATURES))
