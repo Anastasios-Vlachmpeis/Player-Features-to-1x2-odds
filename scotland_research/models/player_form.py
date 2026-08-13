@@ -23,15 +23,15 @@ class PlayerFormModel:
         self._fitted_model: object | None = None
 
     def fit(self, train: pd.DataFrame) -> None:
-        self._fitted_model = fit_logistic_model(train, PLAYER_FEATURES)
+        self._fitted_model = fit_logistic_model(train, self._feature_columns)
 
     def predict_proba(self, test: pd.DataFrame) -> np.ndarray:
         if self._fitted_model is None:
             raise RuntimeError("PlayerFormModel.fit must be called before predict_proba")
-        return aligned_model_probabilities(self._fitted_model, test[PLAYER_FEATURES])
+        return aligned_model_probabilities(self._fitted_model, test[self._feature_columns])
 
     def export_coefficients(self, test_season: str) -> pd.DataFrame | None:
         if self._fitted_model is None:
             return None
 
-        return pd.DataFrame(coefficient_rows(self._fitted_model, self.name, test_season, PLAYER_FEATURES))
+        return pd.DataFrame(coefficient_rows(self._fitted_model, self.name, test_season, self._feature_columns))

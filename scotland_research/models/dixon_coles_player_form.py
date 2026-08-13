@@ -1,4 +1,4 @@
-"""Dixon-Coles score model with direct player-form expected-goal adjustment."""
+#Dixon-Coles score model with direct player-form expected-goal adjustment
 
 from __future__ import annotations
 
