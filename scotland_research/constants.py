@@ -14,6 +14,11 @@ DEFAULT_EVALUATION_DIR = PROJECT_ROOT / "artifacts" / "scotland_model_evaluation
 
 CLASS_ORDER = ["H", "D", "A"]
 PLAYER_FEATURES = [f"diff_{feature}" for feature in TEAM_FEATURES]
+EXPANDED_PLAYER_FEATURES = [
+    f"{side}_{feature}"
+    for side in ("home", "away")
+    for feature in TEAM_FEATURES
+]
 MARKET_FEATURES = ["market_log_home_vs_draw", "market_log_away_vs_draw"]
 
 # Fixed research thresholds: at most 1% worse is very close; at most 2% worse is close.
@@ -41,4 +46,5 @@ REQUIRED_COLUMNS = {
     "market_draw_probability",
     "market_away_probability",
     *PLAYER_FEATURES,
+    *EXPANDED_PLAYER_FEATURES,
 }

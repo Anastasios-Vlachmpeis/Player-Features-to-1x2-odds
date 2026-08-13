@@ -43,7 +43,7 @@ class PlayerFormLightGBMModel:
     def predict_proba(self, test: pd.DataFrame) -> np.ndarray:
         if self._fitted_model is None:
             raise RuntimeError(
-                "PlayerFormLightGBMModel.fit must be called before predict_proba"
+                f"{type(self).__name__}.fit must be called before predict_proba"
             )
 
         probabilities = self._fitted_model.predict_proba(test[self._feature_columns])
