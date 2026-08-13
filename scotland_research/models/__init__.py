@@ -63,3 +63,38 @@ def models_for_player_feature_removal_test() -> list[MatchPredictor]:
         models.append(MarketPlusPlayerFormModel(player_features=remaining_columns,name=f"market_without_{group_name}"))
 
     return models
+
+def models_for_individual_feature_removal_test() -> list[MatchPredictor]:
+    models: list[MatchPredictor] = [ClosingMarket()]
+
+    families = [
+        ("player_form", PlayerFormModel),
+        ("market_plus_player_form", MarketPlusPlayerFormModel),
+        ("dixon_coles_player_form", DixonColesPlayerFormModel),
+    ]
+
+    for family_name, model_class in families:
+        models.append(
+            model_class(
+                player_features=PLAYER_FEATURES,
+                name=f"{family_name}_all_features",
+            )
+        )
+
+        for removed_feature in PLAYER_FEATURES:
+            remaining_features = [
+                feature
+                for feature in PLAYER_FEATURES
+                if feature != removed_feature
+            ]
+
+            short_name = removed_feature.removeprefix("diff_")
+
+            models.append(
+                model_class(
+                    player_features=remaining_features,
+                    name=f"{family_name}_without_{short_name}",
+                )
+            )
+
+    return models
