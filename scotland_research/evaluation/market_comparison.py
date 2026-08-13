@@ -19,10 +19,8 @@ def market_comparison_label(model: str, relative_difference: float) -> str:
     return "worse_by_more_than_2_percent"
 
 
-def add_market_comparison(
-    metrics: pd.DataFrame,
-    group_column: str | None = None,
-) -> pd.DataFrame:
+def add_market_comparison(metrics: pd.DataFrame, group_column: str | None = None) -> pd.DataFrame:
+
     compared = metrics.copy()
     if group_column is None:
         market_rows = compared[compared["model"].eq("closing_market")]
