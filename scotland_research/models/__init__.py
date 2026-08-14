@@ -14,6 +14,7 @@ from models.multinomial_gam import MultinomialGAMModel
 from models.player_form import PlayerFormModel
 from models.player_form_lightgbm import PlayerFormLightGBMModel
 from models.poisson_gam import PoissonGAMModel
+from models.tuned_lightgbm import TunedExpandedPlayerFormLightGBMModel, TunedPlayerFormLightGBMModel
 
 
 PLAYER_FEATURE_GROUPS = {
@@ -51,6 +52,8 @@ def all_predictors() -> list[MatchPredictor]:
         PlayerFormModel(),
         PlayerFormLightGBMModel(),
         ExpandedPlayerFormLightGBMModel(),
+        TunedPlayerFormLightGBMModel(),
+        TunedExpandedPlayerFormLightGBMModel(),
         PoissonGAMModel(),
         MultinomialGAMModel(),
         MarketPlusPlayerFormModel(),

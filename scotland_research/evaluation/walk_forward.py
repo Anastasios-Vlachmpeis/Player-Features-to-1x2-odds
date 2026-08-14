@@ -19,6 +19,7 @@ class WalkForwardResult:
     overall_metrics: pd.DataFrame
     predictions: pd.DataFrame
     coefficients: pd.DataFrame
+    tuning_artifacts: pd.DataFrame
 
 
 def run_walk_forward(
@@ -28,6 +29,7 @@ def run_walk_forward(
     metric_rows: list[dict[str, object]] = []
     prediction_frames: list[pd.DataFrame] = []
     coefficient_frames: list[pd.DataFrame] = []
+    tuning_artifact_frames: list[pd.DataFrame] = []
 
     for test_season, train_seasons in FOLDS:
         train = dataset[dataset["season"].isin(train_seasons)].copy()
@@ -39,38 +41,38 @@ def run_walk_forward(
 
         for predictor in predictors:
             predictor.fit(train)
-            probabilities = predictor.predict_proba(test)
-            if not np.allclose(probabilities.sum(axis=1), 1.0, atol=1e-10):
-                raise ValueError(f"{predictor.name} probabilities do not sum to one")
+            if hasattr(predictor, "predict_probability_variants"):
+                variants = predictor.predict_probability_variants(test)
+            else:
+                variants = {predictor.name: predictor.predict_proba(test)}
 
-            scores = score_predictions(test["result_3way"], probabilities)
-            metric_rows.append(
-                {
-                    "test_season": test_season,
-                    "train_seasons": ";".join(train_seasons),
-                    "train_matches": len(train),
-                    "test_matches": len(test),
-                    "model": predictor.name,
-                    **scores,
-                }
-            )
-
-            output = test[
-                ["match_id", "season", "match_date", "home_team", "away_team", "result_3way"]
-            ].copy()
-            output.insert(0, "model", predictor.name)
-            output = pd.concat(
-                [output.reset_index(drop=True), probability_frame(probabilities)],
-                axis=1,
-            )
-            output["predicted_result"] = np.asarray(CLASS_ORDER)[
-                np.argmax(probabilities, axis=1)
-            ]
-            prediction_frames.append(output)
+            for variant_name, probabilities in variants.items():
+                if not np.allclose(probabilities.sum(axis=1), 1.0, atol=1e-10):
+                    raise ValueError(f"{variant_name} probabilities do not sum to one")
+                scores = score_predictions(test["result_3way"], probabilities)
+                metric_rows.append(
+                    {
+                        "test_season": test_season,
+                        "train_seasons": ";".join(train_seasons),
+                        "train_matches": len(train),
+                        "test_matches": len(test),
+                        "model": variant_name,
+                        **scores,
+                    }
+                )
+                output = test[["match_id", "season", "match_date", "home_team", "away_team", "result_3way"]].copy()
+                output.insert(0, "model", variant_name)
+                output = pd.concat([output.reset_index(drop=True), probability_frame(probabilities)], axis=1)
+                output["predicted_result"] = np.asarray(CLASS_ORDER)[np.argmax(probabilities, axis=1)]
+                prediction_frames.append(output)
 
             coefficients = predictor.export_coefficients(test_season)
             if coefficients is not None and not coefficients.empty:
                 coefficient_frames.append(coefficients)
+            if hasattr(predictor, "export_tuning_artifacts"):
+                artifacts = predictor.export_tuning_artifacts(test_season)
+                if artifacts is not None and not artifacts.empty:
+                    tuning_artifact_frames.append(artifacts)
 
     fold_metrics = add_market_comparison(
         pd.DataFrame(metric_rows),
@@ -82,6 +84,7 @@ def run_walk_forward(
         if coefficient_frames
         else pd.DataFrame()
     )
+    tuning_artifacts = pd.concat(tuning_artifact_frames, ignore_index=True, sort=False) if tuning_artifact_frames else pd.DataFrame()
 
     overall_rows: list[dict[str, object]] = []
     for model_name, group in predictions.groupby("model", sort=False):
@@ -102,4 +105,5 @@ def run_walk_forward(
         overall_metrics=overall_metrics,
         predictions=predictions,
         coefficients=coefficients,
+        tuning_artifacts=tuning_artifacts,
     )

@@ -19,12 +19,13 @@ def write_csv_atomic(frame: pd.DataFrame, path: Path) -> None:
 def write_evaluation_outputs(
     result: WalkForwardResult,
     output_dir: Path,
-) -> tuple[Path, Path, Path, Path]:
+) -> tuple[Path, Path, Path, Path, Path]:
     paths = (
         output_dir / "fold_metrics.csv",
         output_dir / "overall_metrics.csv",
         output_dir / "predictions.csv",
         output_dir / "feature_coefficients.csv",
+        output_dir / "tuning_calibration_artifacts.csv",
     )
     for frame, path in zip(
         (
@@ -32,6 +33,7 @@ def write_evaluation_outputs(
             result.overall_metrics,
             result.predictions,
             result.coefficients,
+            result.tuning_artifacts,
         ),
         paths,
         strict=True,
