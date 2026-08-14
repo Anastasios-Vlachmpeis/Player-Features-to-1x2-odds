@@ -5,18 +5,24 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from build_match_dataset import DEFAULT_OUTPUT_DIR, MATCH_DATASET_NAME
+from build_team_strength_features import TEAM_STRENGTH_NAME
 from validate_dataset import PLAYER_STATS_CSV, as_bool
 from feature_req import NPXG_FIELD, NPXG_MIN_VALID_APPEARANCES, NPXG_MIN_VALID_MINUTES
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MATCH_DATASET = DEFAULT_OUTPUT_DIR / MATCH_DATASET_NAME
+DEFAULT_TEAM_STRENGTH = DEFAULT_OUTPUT_DIR / TEAM_STRENGTH_NAME
 PLAYER_FORM_NAME = "player_rolling_form.csv"
 PLAYER_FORM_COVERAGE_NAME = "player_form_coverage.csv"
 ROLLING_APPEARANCES = 5
+FORM_WINDOWS = (1, 3, 5)
+OPPONENT_RIDGE_STRENGTH = 25.0
+EWM_HALFLIFE_APPEARANCES = 2.0
 
 EVENT_STATS = {
     "shooting.goals": "goals",
@@ -27,6 +33,15 @@ EVENT_STATS = {
     "shooting.total_shots": "shots",
     "passing.key_passes": "key_passes",
     "goalkeeping.saves": "saves",
+}
+
+# These targets receive expanding pre-match expectations. Event targets are
+# converted to per-90 rates; rating is already an appearance-level measure.
+ADJUSTED_TARGETS = {
+    "shots": ("shooting.total_shots", True, 0.0),
+    "key_passes": ("passing.key_passes", True, 0.0),
+    "defensive_actions": ("defensive_actions", True, 0.0),
+    "rating": ("rating", False, 6.5),
 }
 
 REQUIRED_PLAYER_COLUMNS = {
@@ -82,6 +97,30 @@ OUTPUT_COLUMNS = [
     "form_saves_per90_5",
 ]
 
+# Retain several horizons instead of forcing all form into an equal-weight
+# five-appearance average. The 1-vs-5 difference measures short-term direction.
+for stat_name in ("shots", "key_passes", "defensive_actions"):
+    OUTPUT_COLUMNS.extend(
+        [
+            f"form_{stat_name}_per90_1",
+            f"form_{stat_name}_per90_3",
+            f"form_{stat_name}_per90_ewm",
+            f"form_{stat_name}_trend_1_5",
+        ]
+    )
+OUTPUT_COLUMNS.extend(["form_rating_mean_1", "form_rating_mean_3", "form_rating_ewm", "form_rating_trend_1_5", "form_rating_std_5"])
+for stat_name in ADJUSTED_TARGETS:
+    OUTPUT_COLUMNS.extend(
+        [
+            f"form_adjusted_{stat_name}_mean_1",
+            f"form_adjusted_{stat_name}_mean_3",
+            f"form_adjusted_{stat_name}_mean_5",
+            f"form_adjusted_{stat_name}_ewm",
+            f"form_adjusted_{stat_name}_trend_1_5",
+            f"form_adjusted_{stat_name}_std_5",
+        ]
+    )
+
 
 def parse_args() -> argparse.Namespace:
     
@@ -91,6 +130,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_MATCH_DATASET,
         help=f"Clean match table from step 2 (default: {DEFAULT_MATCH_DATASET})",
+    )
+    parser.add_argument(
+        "--team-strength",
+        type=Path,
+        default=DEFAULT_TEAM_STRENGTH,
+        help=f"Pre-match team-strength table (default: {DEFAULT_TEAM_STRENGTH})",
     )
     parser.add_argument(
         "--output-dir",
@@ -121,26 +166,26 @@ def write_csv_atomic(frame: pd.DataFrame, path: Path) -> None:
     temporary_path.replace(path)
 
 
-def rolling_previous_sum(history: pd.DataFrame, column: str) -> pd.Series:
+def rolling_previous_sum(history: pd.DataFrame, column: str, window: int = ROLLING_APPEARANCES) -> pd.Series:
     
     return history.groupby("player_id", sort=False)[column].transform(
         lambda values: values.shift(1).rolling(
-            ROLLING_APPEARANCES,
+            window,
             min_periods=1,
         ).sum()
     ).fillna(0.0)
 
 
-def rolling_previous_observed_sum(history: pd.DataFrame, column: str) -> pd.Series:
+def rolling_previous_observed_sum(history: pd.DataFrame, column: str, window: int = ROLLING_APPEARANCES) -> pd.Series:
     # Sum only observed values while retaining a separate coverage count
-    return history.groupby("player_id", sort=False)[column].transform(lambda values: values.shift(1).rolling(ROLLING_APPEARANCES, min_periods=1).sum()).fillna(0.0)
+    return history.groupby("player_id", sort=False)[column].transform(lambda values: values.shift(1).rolling(window, min_periods=1).sum()).fillna(0.0)
 
 
-def rolling_previous_mean(history: pd.DataFrame, column: str) -> pd.Series:
+def rolling_previous_mean(history: pd.DataFrame, column: str, window: int = ROLLING_APPEARANCES) -> pd.Series:
     
     return history.groupby("player_id", sort=False)[column].transform(
         lambda values: values.shift(1).rolling(
-            ROLLING_APPEARANCES,
+            window,
             min_periods=1,
         ).mean()
     ).fillna(0.0)
@@ -149,6 +194,18 @@ def rolling_previous_mean(history: pd.DataFrame, column: str) -> pd.Series:
 def rolling_previous_observed_count(history: pd.DataFrame, column: str) -> pd.Series:
     # Count genuine observations, including observed zero values
     return history.groupby("player_id", sort=False)[column].transform(lambda values: values.shift(1).rolling(ROLLING_APPEARANCES, min_periods=1).count()).fillna(0).astype(int)
+
+
+def rolling_previous_std(history: pd.DataFrame, column: str, window: int = ROLLING_APPEARANCES) -> pd.Series:
+    # Population standard deviation describes consistency; a one-match history
+    # has zero observed dispersion rather than an undefined sample statistic.
+    return history.groupby("player_id", sort=False)[column].transform(lambda values: values.shift(1).rolling(window, min_periods=1).std(ddof=0)).fillna(0.0)
+
+
+def previous_ewm(history: pd.DataFrame, column: str) -> pd.Series:
+    # EWM is shifted first, so the current appearance receives zero weight in
+    # its own feature; half-life two makes recent appearances matter more.
+    return history.groupby("player_id", sort=False)[column].transform(lambda values: values.shift(1).ewm(halflife=EWM_HALFLIFE_APPEARANCES, adjust=False).mean()).fillna(0.0)
 
 
 def load_history(player_stats_path: Path) -> pd.DataFrame:
@@ -191,6 +248,71 @@ def load_history(player_stats_path: Path) -> pd.DataFrame:
         kind="stable",
     ).reset_index(drop=True)
     return players
+
+
+def add_opponent_adjusted_performance(history: pd.DataFrame, team_strength: pd.DataFrame) -> pd.DataFrame:
+    """Residualize each appearance against context estimated from earlier rows."""
+    required_strength = {"match_id", "team_id", "elo_rating", "opponent_elo_rating"}
+    missing = sorted(required_strength.difference(team_strength.columns))
+    if missing:
+        raise ValueError(f"Team-strength table is missing: {', '.join(missing)}")
+
+    form = history.copy()
+    strengths = team_strength[list(required_strength)].copy()
+    strengths[["match_id", "team_id"]] = strengths[["match_id", "team_id"]].astype("string")
+    form[["match_id", "team_id"]] = form[["match_id", "team_id"]].astype("string")
+    form = form.merge(strengths, on=["match_id", "team_id"], how="left", validate="many_to_one")
+    form["elo_rating"] = pd.to_numeric(form["elo_rating"], errors="coerce").fillna(1500.0)
+    form["opponent_elo_rating"] = pd.to_numeric(form["opponent_elo_rating"], errors="coerce").fillna(1500.0)
+
+    # X contains an intercept, venue, relative team strength, and position. A
+    # ridge system is updated after each kickoff batch: beta=(X'WX+lambda I)^-1 X'Wy.
+    position_order = ("D", "F", "G", "M")
+    predictor_count = 3 + len(position_order)
+    cross_products = {name: OPPONENT_RIDGE_STRENGTH * np.eye(predictor_count) for name in ADJUSTED_TARGETS}
+    target_products = {name: np.zeros(predictor_count) for name in ADJUSTED_TARGETS}
+    form = form.sort_values(["utc_datetime", "match_id", "player_id"], kind="stable")
+
+    for _, batch in form.groupby("utc_datetime", sort=True):
+        indexes = batch.index
+        is_home = batch["team_id"].eq(batch["home_team_id"]).astype(float).to_numpy()
+        relative_elo = ((batch["elo_rating"] - batch["opponent_elo_rating"]) / 400.0).to_numpy()
+        position_values = batch["position"].astype("string")
+        design = np.column_stack(
+            [
+                np.ones(len(batch)),
+                is_home,
+                relative_elo,
+                *[position_values.eq(position).astype(float).to_numpy() for position in position_order],
+            ]
+        )
+        update_payload: list[tuple[str, np.ndarray, np.ndarray]] = []
+        minutes = batch["minutes_played"].to_numpy(dtype=float)
+        exposure = np.clip(minutes / 90.0, 0.0, 1.0)
+
+        for name, (source, per90, baseline) in ADJUSTED_TARGETS.items():
+            beta = np.linalg.solve(cross_products[name], target_products[name])
+            expected = baseline + design @ beta
+            if per90:
+                expected = np.clip(expected, 0.0, None)
+                actual = np.divide(90.0 * batch[source].to_numpy(dtype=float), minutes, out=np.zeros(len(batch)), where=minutes > 0)
+            else:
+                actual = batch[source].fillna(baseline).to_numpy(dtype=float)
+            residual = actual - expected
+            form.loc[indexes, f"adjusted_{name}"] = residual
+
+            valid = batch[source].notna().to_numpy()
+            weights = exposure * valid
+            centered_target = actual - baseline
+            update_payload.append((name, weights, centered_target))
+
+        # All players at this timestamp were predicted from the same historical
+        # state. Only now are their observed performances added to the ridge fit.
+        for name, weights, centered_target in update_payload:
+            cross_products[name] += design.T @ (weights[:, None] * design)
+            target_products[name] += design.T @ (weights * centered_target)
+
+    return form.sort_values(["player_id", "utc_datetime", "match_id"], kind="stable").reset_index(drop=True)
 
 
 def add_rolling_form(history: pd.DataFrame) -> pd.DataFrame:
@@ -236,6 +358,53 @@ def add_rolling_form(history: pd.DataFrame) -> pd.DataFrame:
     valid_npxg = form["form_npxg_observations_5"].ge(NPXG_MIN_VALID_APPEARANCES) & form["form_npxg_minutes_5"].ge(NPXG_MIN_VALID_MINUTES)
     form["form_npxg_per90_5"] = float("nan")
     form.loc[valid_npxg, "form_npxg_per90_5"] = 90.0 * form.loc[valid_npxg, "form_npxg_sum_5"] / form.loc[valid_npxg, "form_npxg_minutes_5"]
+
+    # Multiple horizons preserve recency shape. Per-90 rates use total events /
+    # total minutes in each shifted window, avoiding an average of noisy rates.
+    recency_sources = {
+        "shots": "shooting.total_shots",
+        "key_passes": "passing.key_passes",
+        "defensive_actions": "defensive_actions",
+    }
+    for window in FORM_WINDOWS:
+        minutes_column = f"_form_minutes_{window}"
+        form[minutes_column] = rolling_previous_sum(form, "minutes_played", window)
+        form[f"form_rating_mean_{window}"] = rolling_previous_mean(form, "rating", window)
+        for stat_name, source in recency_sources.items():
+            total = rolling_previous_sum(form, source, window)
+            output = f"form_{stat_name}_per90_{window}"
+            form[output] = 0.0
+            valid_minutes = form[minutes_column].gt(0)
+            form.loc[valid_minutes, output] = 90.0 * total.loc[valid_minutes] / form.loc[valid_minutes, minutes_column]
+
+    form["form_rating_ewm"] = previous_ewm(form, "rating")
+    form["form_rating_trend_1_5"] = form["form_rating_mean_1"] - form["form_rating_mean_5"]
+    form["form_rating_std_5"] = rolling_previous_std(form, "rating")
+    for stat_name, source in recency_sources.items():
+        appearance_rate = f"_appearance_{stat_name}_per90"
+        form[appearance_rate] = np.divide(90.0 * form[source], form["minutes_played"], out=np.zeros(len(form)), where=form["minutes_played"].gt(0))
+        form[f"form_{stat_name}_per90_ewm"] = previous_ewm(form, appearance_rate)
+        form[f"form_{stat_name}_trend_1_5"] = form[f"form_{stat_name}_per90_1"] - form[f"form_{stat_name}_per90_5"]
+
+    # Opponent-adjusted values are residuals. Event residuals are averaged with
+    # minute exposure weights; rating residuals use an ordinary appearance mean.
+    for stat_name, (_, per90, _) in ADJUSTED_TARGETS.items():
+        source = f"adjusted_{stat_name}"
+        if source not in form:
+            form[source] = 0.0
+        weighted_source = f"_weighted_{source}"
+        form[weighted_source] = form[source] * form["minutes_played"]
+        for window in FORM_WINDOWS:
+            if per90:
+                weighted_total = rolling_previous_sum(form, weighted_source, window)
+                denominator = form[f"_form_minutes_{window}"]
+                output = np.divide(weighted_total, denominator, out=np.zeros(len(form)), where=denominator.gt(0))
+                form[f"form_adjusted_{stat_name}_mean_{window}"] = output
+            else:
+                form[f"form_adjusted_{stat_name}_mean_{window}"] = rolling_previous_mean(form, source, window)
+        form[f"form_adjusted_{stat_name}_ewm"] = previous_ewm(form, source)
+        form[f"form_adjusted_{stat_name}_trend_1_5"] = form[f"form_adjusted_{stat_name}_mean_1"] - form[f"form_adjusted_{stat_name}_mean_5"]
+        form[f"form_adjusted_{stat_name}_std_5"] = rolling_previous_std(form, source)
     
     return form
 
@@ -346,9 +515,13 @@ def build_coverage(starters: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def build_outputs(player_stats_path: Path, match_dataset_path: Path, output_dir: Path) -> tuple[Path, Path]:
+def build_outputs(player_stats_path: Path, match_dataset_path: Path, team_strength_path: Path, output_dir: Path) -> tuple[Path, Path]:
     
     history = load_history(player_stats_path)
+    if not team_strength_path.exists():
+        raise FileNotFoundError(f"Team-strength source does not exist: {team_strength_path}")
+    team_strength = pd.read_csv(team_strength_path, dtype={"match_id": "string", "team_id": "string"})
+    history = add_opponent_adjusted_performance(history, team_strength)
     form = add_rolling_form(history)
     starters = select_target_starters(form, match_dataset_path)
     coverage = build_coverage(starters)
@@ -369,8 +542,9 @@ def main() -> None:
     
     args = parse_args()
     match_dataset_path = resolve_project_path(args.match_dataset)
+    team_strength_path = resolve_project_path(args.team_strength)
     output_dir = resolve_project_path(args.output_dir)
-    build_outputs(PLAYER_STATS_CSV, match_dataset_path, output_dir)
+    build_outputs(PLAYER_STATS_CSV, match_dataset_path, team_strength_path, output_dir)
 
 
 if __name__ == "__main__":

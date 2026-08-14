@@ -12,7 +12,7 @@ import pandas as pd
 
 from feature_req import NPXG_FIELD, NPXG_MAX_SEASON_COVERAGE_DROP, NPXG_MIN_PLAYER_COVERAGE, USE_NPXG_FEATURE
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data" / "statsapi" / "scotland"
 MATCHES_CSV = DATA_DIR / "matches.csv"
 PLAYER_STATS_CSV = DATA_DIR / "player_match_stats.csv"
@@ -291,6 +291,10 @@ def build_match_validation(
         "away_team",
         "home_score",
         "away_score",
+        "result_3way",
+        "home_odds",
+        "draw_odds",
+        "away_odds",
         "football_data_match",
         "closing_odds_available",
         "score_matches_football_data",

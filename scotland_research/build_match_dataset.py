@@ -109,11 +109,19 @@ def build_outputs(output_dir: Path) -> tuple[Path, Path]:
     validation = build_match_validation(matches, players, football_data)
 
     dataset = validation[validation["model_ready"]].copy()
+    dataset["odds_source"] = "football_data_closing"
     dataset = add_market_probabilities(dataset)
     dataset = dataset[MATCH_COLUMNS].sort_values(["utc_date", "match_id"]).reset_index(drop=True)
     validate_output(dataset)
 
     exclusions = validation[~validation["model_ready"]].copy()
+    # Record the first failed contract so exclusions remain auditable rather than
+    # silently disappearing between validation and feature construction.
+    exclusions["exclusion_reason"] = "other_validation_failure"
+    exclusions.loc[~exclusions["football_data_match"], "exclusion_reason"] = "not_top_division_match"
+    exclusions.loc[exclusions["football_data_match"] & ~exclusions["twenty_two_starters"], "exclusion_reason"] = "invalid_starter_count"
+    exclusions.loc[exclusions["football_data_match"] & ~exclusions["closing_odds_available"], "exclusion_reason"] = "missing_closing_odds"
+    exclusions.loc[exclusions["football_data_match"] & ~exclusions["score_matches_football_data"], "exclusion_reason"] = "score_disagreement"
     exclusions["excluded_from_prediction_targets"] = True
     exclusions["retained_for_player_history"] = exclusions["player_data_available"]
     exclusion_columns = [
