@@ -9,6 +9,7 @@ import pandas as pd
 
 from build_match_dataset import DEFAULT_OUTPUT_DIR, MATCH_DATASET_NAME
 from validate_dataset import PLAYER_STATS_CSV, as_bool
+from feature_req import NPXG_FIELD, NPXG_MIN_VALID_APPEARANCES, NPXG_MIN_VALID_MINUTES
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -73,6 +74,8 @@ OUTPUT_COLUMNS = [
     "form_goals_per90_5",
     "form_assists_per90_5",
     "form_npxg_per90_5",
+    "form_npxg_observations_5",
+    "form_npxg_minutes_5",
     "form_shots_per90_5",
     "form_key_passes_per90_5",
     "form_defensive_actions_per90_5",
@@ -128,6 +131,11 @@ def rolling_previous_sum(history: pd.DataFrame, column: str) -> pd.Series:
     ).fillna(0.0)
 
 
+def rolling_previous_observed_sum(history: pd.DataFrame, column: str) -> pd.Series:
+    # Sum only observed values while retaining a separate coverage count
+    return history.groupby("player_id", sort=False)[column].transform(lambda values: values.shift(1).rolling(ROLLING_APPEARANCES, min_periods=1).sum()).fillna(0.0)
+
+
 def rolling_previous_mean(history: pd.DataFrame, column: str) -> pd.Series:
     
     return history.groupby("player_id", sort=False)[column].transform(
@@ -136,6 +144,11 @@ def rolling_previous_mean(history: pd.DataFrame, column: str) -> pd.Series:
             min_periods=1,
         ).mean()
     ).fillna(0.0)
+
+
+def rolling_previous_observed_count(history: pd.DataFrame, column: str) -> pd.Series:
+    # Count genuine observations, including observed zero values
+    return history.groupby("player_id", sort=False)[column].transform(lambda values: values.shift(1).rolling(ROLLING_APPEARANCES, min_periods=1).count()).fillna(0).astype(int)
 
 
 def load_history(player_stats_path: Path) -> pd.DataFrame:
@@ -165,7 +178,7 @@ def load_history(player_stats_path: Path) -> pd.DataFrame:
         "minutes_played",
         "defending.tackles",
         "defending.interceptions",
-        *EVENT_STATS,
+        *[column for column in EVENT_STATS if column != NPXG_FIELD]
     ]
     players[event_columns] = players[event_columns].fillna(0.0)
     players["started_numeric"] = players["started"].astype(int)
@@ -202,9 +215,10 @@ def add_rolling_form(history: pd.DataFrame) -> pd.DataFrame:
     form["form_starts_5"] = rolling_previous_sum(form, "started_numeric").astype(int)
     form["form_rating_mean_5"] = rolling_previous_mean(form, "rating")
 
+    # Process npxG separately because it has nullable provider coverage
     rolling_stats: dict[str, pd.Series] = {
         output_name: rolling_previous_sum(form, source_name)
-        for source_name, output_name in EVENT_STATS.items()
+        for source_name, output_name in EVENT_STATS.items() if source_name != NPXG_FIELD
     }
     rolling_stats["defensive_actions"] = rolling_previous_sum(form, "defensive_actions")
 
@@ -212,11 +226,17 @@ def add_rolling_form(history: pd.DataFrame) -> pd.DataFrame:
     for feature_name, rolling_total in rolling_stats.items():
         output_column = f"form_{feature_name}_per90_5"
         form[output_column] = 0.0
-        form.loc[has_minutes, output_column] = (
-            90.0
-            * rolling_total.loc[has_minutes]
-            / form.loc[has_minutes, "form_minutes_5"]
-        )
+        form.loc[has_minutes, output_column] = 90.0 * rolling_total.loc[has_minutes] / form.loc[has_minutes, "form_minutes_5"]
+    
+    # Calculate npxG using only minutes belonging to observed npxG appearances
+    form["npxg_observed_minutes"] = form["minutes_played"].where(form[NPXG_FIELD].notna())
+    form["form_npxg_sum_5"] = rolling_previous_observed_sum(form, NPXG_FIELD)
+    form["form_npxg_minutes_5"] = rolling_previous_observed_sum(form, "npxg_observed_minutes")
+    form["form_npxg_observations_5"] = rolling_previous_observed_count(form, NPXG_FIELD)
+    valid_npxg = form["form_npxg_observations_5"].ge(NPXG_MIN_VALID_APPEARANCES) & form["form_npxg_minutes_5"].ge(NPXG_MIN_VALID_MINUTES)
+    form["form_npxg_per90_5"] = float("nan")
+    form.loc[valid_npxg, "form_npxg_per90_5"] = 90.0 * form.loc[valid_npxg, "form_npxg_sum_5"] / form.loc[valid_npxg, "form_npxg_minutes_5"]
+    
     return form
 
 
@@ -254,22 +274,27 @@ def validate_starter_form(starters: pd.DataFrame, expected_match_ids: set[str]) 
     if set(starters["match_id"]) != expected_match_ids:
         missing = sorted(expected_match_ids.difference(starters["match_id"]))
         raise ValueError(f"Player form is missing target matches: {missing[:10]}")
+    
     if starters.duplicated(["match_id", "player_id"]).any():
         raise ValueError("Player form contains duplicate match/player rows")
 
     per_match = starters.groupby("match_id").size()
+    
     if not per_match.eq(22).all():
         bad = per_match[~per_match.eq(22)]
         raise ValueError(f"Target matches without exactly 22 starter rows:\n{bad.head(10)}")
     per_side = starters.groupby(["match_id", "team_side"]).size()
+    
     if not per_side.eq(11).all():
         bad = per_side[~per_side.eq(11)]
         raise ValueError(f"Target match sides without exactly 11 starters:\n{bad.head(10)}")
 
     if starters["form_window_appearances_5"].gt(ROLLING_APPEARANCES).any():
         raise ValueError("Rolling appearance count exceeds the five-appearance window")
+    
     if starters["form_window_appearances_5"].gt(starters["prior_appearances"]).any():
         raise ValueError("Rolling appearance count exceeds total prior appearances")
+    
     if starters["days_since_previous_appearance"].lt(0).any():
         raise ValueError("A previous appearance occurs after the target match")
 
@@ -281,15 +306,20 @@ def validate_starter_form(starters: pd.DataFrame, expected_match_ids: set[str]) 
         "form_rating_mean_5",
         "form_goals_per90_5",
         "form_assists_per90_5",
-        "form_npxg_per90_5",
+        "form_npxg_observations_5",
+        "form_npxg_minutes_5",
         "form_shots_per90_5",
         "form_key_passes_per90_5",
         "form_defensive_actions_per90_5",
         "form_saves_per90_5",
     ]
+    
     if not starters.loc[no_history, zero_history_columns].eq(0).all().all():
         raise ValueError("A first appearance contains non-zero historical form")
 
+    # A player without prior history must have unknown rather than zero npxG form
+    if starters.loc[no_history, "form_npxg_per90_5"].notna().any(): raise ValueError("A first appearance contains a populated historical npxG rate")
+    
 
 def build_coverage(starters: pd.DataFrame) -> pd.DataFrame:
     
