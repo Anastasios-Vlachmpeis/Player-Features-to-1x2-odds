@@ -1,16 +1,24 @@
-# Shared constants for Scotland walk-forward model evaluation.
+# Shared constants for six-league walk-forward model evaluation.
 
 from __future__ import annotations
 
 from pathlib import Path
 
 from build_match_features import TEAM_FEATURES
-from build_match_dataset import DEFAULT_OUTPUT_DIR
+from league_config import DEVELOPMENT_SEASONS, LEAGUES
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_MODEL_DATASET = DEFAULT_OUTPUT_DIR / "scotland_model_dataset.csv"
-DEFAULT_EVALUATION_DIR = PROJECT_ROOT / "artifacts" / "scotland_model_evaluation"
+DEFAULT_MODEL_DATASET = (
+    PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "all_leagues"
+    / "development_model_dataset.csv"
+)
+DEFAULT_EVALUATION_DIR = PROJECT_ROOT / "artifacts" / "all_leagues_development_evaluation"
+
+EXPECTED_LEAGUES = frozenset(LEAGUES)
 
 CLASS_ORDER = ["H", "D", "A"]
 PLAYER_FEATURES = [f"diff_{feature}" for feature in TEAM_FEATURES]
@@ -25,13 +33,13 @@ MARKET_FEATURES = ["market_log_home_vs_draw", "market_log_away_vs_draw"]
 VERY_CLOSE_THRESHOLD = 0.01
 CLOSE_THRESHOLD = 0.02
 
-FOLDS = [
-    ("2022-23", ["2020-21", "2021-22"]),
-    ("2023-24", ["2020-21", "2021-22", "2022-23"]),
-    ("2024-25", ["2020-21", "2021-22", "2022-23", "2023-24"]),
-]
+DEVELOPMENT_FOLDS = tuple(
+    (test_season, DEVELOPMENT_SEASONS[:test_index])
+    for test_index, test_season in enumerate(DEVELOPMENT_SEASONS[2:], start=2)
+)
 
 REQUIRED_COLUMNS = {
+    "league",
     "match_id",
     "season",
     "match_date",

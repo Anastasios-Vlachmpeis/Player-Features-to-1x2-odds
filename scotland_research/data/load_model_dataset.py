@@ -1,4 +1,4 @@
-# Load and validate the step-4 Scotland modelling dataset.
+# Load and validate the combined six-league development dataset.
 
 from __future__ import annotations
 
@@ -24,6 +24,9 @@ def load_dataset(path: Path) -> pd.DataFrame:
         raise ValueError(f"{path} is missing required columns: {', '.join(missing)}")
     if frame["match_id"].duplicated().any():
         raise ValueError("Model dataset contains duplicate match IDs")
+    if frame["league"].isna().any() or frame["league"].astype(str).str.strip().eq("").any():
+        raise ValueError("league must be populated for every match")
+    frame["league"] = frame["league"].astype(str).str.strip().str.lower()
     if not frame["result_3way"].isin(CLASS_ORDER).all():
         raise ValueError("result_3way must contain only H, D, or A")
 

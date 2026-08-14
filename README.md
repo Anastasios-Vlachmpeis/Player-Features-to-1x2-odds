@@ -127,21 +127,20 @@ data/processed/all_leagues/final_2025_26_model_dataset.csv
 Omitting `--include-final` is a deliberate safeguard: a normal development build
 cannot contain 2025/26 rows.
 
-## Run the current evaluations
+## Run the six-league development evaluation
 
-With `data/processed/scotland/scotland_model_dataset.csv` already built:
+With `data/processed/all_leagues/development_model_dataset.csv` already built:
 
 ```powershell
-$repo = (Get-Location).Path
-
-.venv\Scripts\python scotland_research\evaluate_models.py `
-  --model-dataset "$repo\data\processed\scotland\scotland_model_dataset.csv" `
-  --output-dir "$repo\artifacts\scotland_model_evaluation"
-
-.venv\Scripts\python scotland_research\evaluate_player_feature_removal.py
+.venv\Scripts\python scotland_research\evaluate_models.py
 ```
 
-The main evaluation writes fold metrics, overall metrics, match predictions, and fitted feature coefficients. The feature-removal evaluation compares the complete market-plus-player model with variants that remove shooting, chance creation, defending, ratings, recent experience, or history-coverage features.
+The evaluator pools all six leagues inside each chronological development fold.
+It refuses to run if any league-season is absent or if the held-out 2025/26
+season is present. Outputs are written to
+`artifacts/all_leagues_development_evaluation`. The
+`fold_league_counts.csv` output makes each country's train/test match count
+visible in every fold.
 
 ## Data safeguards
 

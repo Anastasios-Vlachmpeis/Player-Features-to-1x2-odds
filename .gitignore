@@ -22,4 +22,5 @@ tests/
 tests/*
 !tests/test_dixon_coles_validity.py
 !tests/test_all_leagues_dataset.py
+!tests/test_six_league_folds.py
 archive/

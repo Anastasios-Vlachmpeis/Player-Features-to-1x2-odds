@@ -1,4 +1,4 @@
-# Walk-forward evaluation of Scotland player-form models and baselines
+# Walk-forward evaluation of six-league player-form models and baselines.
 
 from __future__ import annotations
 
