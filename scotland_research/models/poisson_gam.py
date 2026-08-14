@@ -10,7 +10,15 @@ from sklearn.linear_model import PoissonRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import SplineTransformer, StandardScaler
 
-from models.dixon_coles_core import RHO_BOUND, TAU_EPSILON, dixon_coles_tau, scoreline_to_outcome_probabilities
+from models.dixon_coles_core import (
+    RHO_BOUND,
+    TAU_EPSILON,
+    clip_expected_goal_rates,
+    dixon_coles_corrections,
+    dixon_coles_tau,
+    scoreline_to_outcome_probabilities,
+    stabilize_rho,
+)
 
 
 # Smooth only continuous quantities with a plausible curved relationship. Four
@@ -159,6 +167,7 @@ class PoissonGAMModel:
         )
         self._rho = 0.0
         self._is_fitted = False
+        self.last_prediction_diagnostics = pd.DataFrame()
 
     def fit(self, train: pd.DataFrame) -> None:
         features, goals = stack_goal_rows(train)
@@ -171,6 +180,9 @@ class PoissonGAMModel:
         # Only rho is fitted after the GAM. The Poisson terms do not depend on
         # rho, so maximizing the Dixon-Coles likelihood reduces to log(tau).
         def rho_objective(rho: float) -> float:
+            corrections = dixon_coles_corrections(home_rate, away_rate, rho)
+            if not np.isfinite(corrections).all() or np.any(corrections <= TAU_EPSILON):
+                return 1e20
             tau = dixon_coles_tau(home_goals, away_goals, home_rate, away_rate, rho)
             if not np.isfinite(tau).all() or np.any(tau <= TAU_EPSILON):
                 return 1e20
@@ -188,16 +200,36 @@ class PoissonGAMModel:
         require_gam_columns(matches)
         home_rate = self._pipeline.predict(attacking_rows(matches, "home"))
         away_rate = self._pipeline.predict(attacking_rows(matches, "away"))
-        # Clipping protects the finite score grid from pathological extrapolation
-        # while leaving the realistic football scoring range untouched.
-        return np.clip(home_rate, 0.05, 6.0), np.clip(away_rate, 0.05, 6.0)
+        return clip_expected_goal_rates(home_rate, away_rate)
 
     def predict_proba(self, test: pd.DataFrame) -> np.ndarray:
         home_rate, away_rate = self.expected_goal_rates(test)
+        effective_rhos = stabilize_rho(home_rate, away_rate, self._rho)
+        corrections = dixon_coles_corrections(home_rate, away_rate, effective_rhos)
+        diagnostics = pd.DataFrame(
+            {
+                "match_index": test.index.to_numpy(),
+                "home_expected_goals": home_rate,
+                "away_expected_goals": away_rate,
+                "fitted_rho": self._rho,
+                "effective_rho": effective_rhos,
+                "rho_adjusted": ~np.isclose(effective_rhos, self._rho),
+                "minimum_correction": corrections.min(axis=1),
+            }
+        )
+        for column in ("season", "match_date", "home_team", "away_team"):
+            if column in test.columns:
+                diagnostics[column] = test[column].to_numpy()
+        self.last_prediction_diagnostics = diagnostics
         return np.vstack(
             [
-                scoreline_to_outcome_probabilities(home, away, self._rho)
-                for home, away in zip(home_rate, away_rate, strict=True)
+                scoreline_to_outcome_probabilities(home, away, effective_rho)
+                for home, away, effective_rho in zip(
+                    home_rate,
+                    away_rate,
+                    effective_rhos,
+                    strict=True,
+                )
             ]
         )
 

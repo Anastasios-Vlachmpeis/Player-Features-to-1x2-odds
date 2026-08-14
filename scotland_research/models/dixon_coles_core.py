@@ -16,6 +16,61 @@ PLAYER_L2_STRENGTH = 1.0
 RHO_BOUND = 0.20
 INVALID_OBJECTIVE = 1e20
 TAU_EPSILON = 1e-10
+MIN_EXPECTED_GOALS = 0.02
+MAX_EXPECTED_GOALS = 6.0
+CORRECTION_SAFETY_MARGIN = 1e-8
+
+
+def clip_expected_goal_rates(
+    home_rate: np.ndarray | float,
+    away_rate: np.ndarray | float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Apply the same plausible expected-goals bounds in fitting and prediction."""
+    home = np.clip(np.asarray(home_rate, dtype=float), MIN_EXPECTED_GOALS, MAX_EXPECTED_GOALS)
+    away = np.clip(np.asarray(away_rate, dtype=float), MIN_EXPECTED_GOALS, MAX_EXPECTED_GOALS)
+    return home, away
+
+
+def dixon_coles_corrections(
+    home_rate: np.ndarray | float,
+    away_rate: np.ndarray | float,
+    rho: np.ndarray | float,
+) -> np.ndarray:
+    """Return all four low-score corrections for every supplied fixture."""
+    home, away, dependence = np.broadcast_arrays(
+        np.asarray(home_rate, dtype=float),
+        np.asarray(away_rate, dtype=float),
+        np.asarray(rho, dtype=float),
+    )
+    return np.column_stack(
+        [
+            1.0 - home.ravel() * away.ravel() * dependence.ravel(),
+            1.0 + home.ravel() * dependence.ravel(),
+            1.0 + away.ravel() * dependence.ravel(),
+            1.0 - dependence.ravel(),
+        ]
+    )
+
+
+def stabilize_rho(
+    home_rate: np.ndarray | float,
+    away_rate: np.ndarray | float,
+    rho: float,
+) -> np.ndarray:
+    """Shrink rho only where needed to keep every low-score correction positive."""
+    home, away = np.broadcast_arrays(
+        np.asarray(home_rate, dtype=float),
+        np.asarray(away_rate, dtype=float),
+    )
+    lower = np.maximum(
+        (CORRECTION_SAFETY_MARGIN - 1.0) / home,
+        (CORRECTION_SAFETY_MARGIN - 1.0) / away,
+    )
+    upper = np.minimum(
+        (1.0 - CORRECTION_SAFETY_MARGIN) / (home * away),
+        1.0 - CORRECTION_SAFETY_MARGIN,
+    )
+    return np.clip(np.full(home.shape, rho, dtype=float), lower, upper)
 
 
 def dixon_coles_tau(
@@ -58,14 +113,7 @@ def scoreline_to_outcome_probabilities(
     home = poisson_probabilities(home_rate, max_goals)
     away = poisson_probabilities(away_rate, max_goals)
     grid = np.outer(home, away)
-    corrections = np.array(
-        [
-            1.0 - home_rate * away_rate * rho,
-            1.0 + home_rate * rho,
-            1.0 + away_rate * rho,
-            1.0 - rho,
-        ]
-    )
+    corrections = dixon_coles_corrections(home_rate, away_rate, rho)[0]
     if not np.isfinite(corrections).all() or np.any(corrections <= TAU_EPSILON):
         raise ValueError("Dixon-Coles low-score correction is not positive")
     grid[0, 0] *= corrections[0]
@@ -112,6 +160,7 @@ class DixonColesEstimator:
         self.player_features = list(player_features or [])
         self.player_l2_strength = player_l2_strength
         self.parameters: DixonColesParameters | None = None
+        self.last_prediction_diagnostics = pd.DataFrame()
 
     @staticmethod
     def _full_zero_sum(free_values: np.ndarray) -> np.ndarray:
@@ -212,17 +261,25 @@ class DixonColesEstimator:
             ):
                 return INVALID_OBJECTIVE
 
-            home_rate = np.exp(home_linear)
-            away_rate = np.exp(away_linear)
+            home_rate, away_rate = clip_expected_goal_rates(
+                np.exp(home_linear),
+                np.exp(away_linear),
+            )
+            corrections = dixon_coles_corrections(home_rate, away_rate, rho)
+            if not np.isfinite(corrections).all() or np.any(corrections <= TAU_EPSILON):
+                return INVALID_OBJECTIVE
             tau = dixon_coles_tau(home_goals, away_goals, home_rate, away_rate, rho)
             if not np.isfinite(tau).all() or np.any(tau <= TAU_EPSILON):
                 return INVALID_OBJECTIVE
 
+            home_log_rate = np.log(home_rate)
+            away_log_rate = np.log(away_rate)
+
             log_probability = (
-                home_goals * home_linear
+                home_goals * home_log_rate
                 - home_rate
                 - gammaln(home_goals + 1.0)
-                + away_goals * away_linear
+                + away_goals * away_log_rate
                 - away_rate
                 - gammaln(away_goals + 1.0)
                 + np.log(tau)
@@ -240,7 +297,11 @@ class DixonColesEstimator:
             bounds=bounds,
             options={"maxiter": 2_000, "ftol": 1e-9},
         )
-        if not result.success or not np.isfinite(result.fun):
+        if (
+            not result.success
+            or not np.isfinite(result.fun)
+            or result.fun >= INVALID_OBJECTIVE
+        ):
             raise RuntimeError(f"Dixon-Coles optimization failed: {result.message}")
 
         (
@@ -301,33 +362,55 @@ class DixonColesEstimator:
         else:
             player_shift = np.zeros(len(matches), dtype=float)
 
-        home_rate = np.exp(
+        home_linear = (
             parameters.goal_intercept
             + parameters.home_advantage
             + home_attack
             + away_defence
             + player_shift
         )
-        away_rate = np.exp(
+        away_linear = (
             parameters.goal_intercept
             + away_attack
             + home_defence
             - player_shift
         )
-        return home_rate, away_rate
+        return clip_expected_goal_rates(np.exp(home_linear), np.exp(away_linear))
 
     def predict_proba(self, matches: pd.DataFrame) -> np.ndarray:
         if self.parameters is None:
             raise RuntimeError("DixonColesEstimator.fit must be called before prediction")
         home_rates, away_rates = self.expected_goal_rates(matches)
+        effective_rhos = stabilize_rho(home_rates, away_rates, self.parameters.rho)
+        corrections = dixon_coles_corrections(home_rates, away_rates, effective_rhos)
+        diagnostics = pd.DataFrame(
+            {
+                "match_index": matches.index.to_numpy(),
+                "home_expected_goals": home_rates,
+                "away_expected_goals": away_rates,
+                "fitted_rho": self.parameters.rho,
+                "effective_rho": effective_rhos,
+                "rho_adjusted": ~np.isclose(effective_rhos, self.parameters.rho),
+                "minimum_correction": corrections.min(axis=1),
+            }
+        )
+        for column in ("season", "match_date", "home_team", "away_team"):
+            if column in matches.columns:
+                diagnostics[column] = matches[column].to_numpy()
+        self.last_prediction_diagnostics = diagnostics
         return np.vstack(
             [
                 scoreline_to_outcome_probabilities(
                     home_rate,
                     away_rate,
-                    self.parameters.rho,
+                    effective_rho,
                 )
-                for home_rate, away_rate in zip(home_rates, away_rates, strict=True)
+                for home_rate, away_rate, effective_rho in zip(
+                    home_rates,
+                    away_rates,
+                    effective_rhos,
+                    strict=True,
+                )
             ]
         )
 

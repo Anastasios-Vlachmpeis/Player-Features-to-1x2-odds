@@ -18,4 +18,7 @@ __pycache__/
 .env
 .codex_spreadsheet_verify/
 tests/
+!tests/
+tests/*
+!tests/test_dixon_coles_validity.py
 archive/
