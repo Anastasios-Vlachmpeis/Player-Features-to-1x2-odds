@@ -12,6 +12,7 @@ from models.frequency_baseline import FrequencyBaseline
 from models.market_plus_player_form import MarketPlusPlayerFormModel
 from models.player_form import PlayerFormModel
 from models.player_form_lightgbm import PlayerFormLightGBMModel
+from models.poisson_gam import PoissonGAMModel
 
 
 PLAYER_FEATURE_GROUPS = {
@@ -49,6 +50,7 @@ def all_predictors() -> list[MatchPredictor]:
         PlayerFormModel(),
         PlayerFormLightGBMModel(),
         ExpandedPlayerFormLightGBMModel(),
+        PoissonGAMModel(),
         MarketPlusPlayerFormModel(),
     ]
 
