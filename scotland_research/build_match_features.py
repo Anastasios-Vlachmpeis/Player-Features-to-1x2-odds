@@ -10,7 +10,7 @@ import pandas as pd
 from build_match_dataset import DEFAULT_OUTPUT_DIR, MATCH_DATASET_NAME
 from build_player_form import PLAYER_FORM_NAME
 from validate_dataset import as_bool
-
+from feature_policy import USE_NPXG_FEATURE
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MATCH_DATASET = DEFAULT_OUTPUT_DIR / MATCH_DATASET_NAME
@@ -20,15 +20,17 @@ MODEL_DATASET_NAME = "scotland_model_dataset.csv"
 SUM_FEATURES = {
     # Scotland's xG/xA fields are constant zero in the provider export.
     # Use populated npxG and key passes instead of meaningless zero predictors.
-    "npxg_per90_sum_5": "form_npxg_per90_5",
     "key_passes_per90_sum_5": "form_key_passes_per90_5",
     "shots_per90_sum_5": "form_shots_per90_5",
     "defensive_actions_per90_sum_5": "form_defensive_actions_per90_5",
     "recent_minutes_sum_5": "form_minutes_5",
 }
 
+# Include npxG only after its data contract passes
+if USE_NPXG_FEATURE: SUM_FEATURES["npxg_per90_sum_5"] = "form_npxg_per90_5"
+
+
 TEAM_FEATURES = [
-    "npxg_per90_sum_5",
     "key_passes_per90_sum_5",
     "shots_per90_sum_5",
     "defensive_actions_per90_sum_5",
@@ -37,6 +39,10 @@ TEAM_FEATURES = [
     "starters_without_history",
     "starters_without_full_window",
 ]
+
+# Preserve the original feature position when npxG is enabled
+if USE_NPXG_FEATURE: TEAM_FEATURES.insert(0, "npxg_per90_sum_5")
+
 
 REQUIRED_PLAYER_COLUMNS = {
     "match_id",
@@ -108,14 +114,17 @@ def aggregate_team_features(player_form: pd.DataFrame) -> pd.DataFrame:
         raise ValueError("team_side must contain exactly home and away")
 
     grouped = players.groupby(["match_id", "team_side"], sort=False)
-    team_features = grouped[list(SUM_FEATURES.values())].sum().rename(
-        columns={source: output for output, source in SUM_FEATURES.items()}
-    )
+    
+    # Ordinary event features can be summed directly
+    sum_sources = [source for source in SUM_FEATURES.values() if source != "form_npxg_per90_5"]
+    team_features = grouped[sum_sources].sum().rename(columns={source: output for output, source in SUM_FEATURES.items() if source != "form_npxg_per90_5"})
+    # Active npxG requires valid values for every starter and must never convert an all-missing side to zero
+    if USE_NPXG_FEATURE: team_features["npxg_per90_sum_5"] = grouped["form_npxg_per90_5"].sum(min_count=11)
+    
     team_features["rating_mean_5"] = grouped["form_rating_mean_5"].mean()
     team_features["starters_without_history"] = 11 - grouped["has_prior_history"].sum()
-    team_features["starters_without_full_window"] = grouped[
-        "form_window_appearances_5"
-    ].apply(lambda values: values.lt(5).sum())
+    team_features["starters_without_full_window"] = grouped["form_window_appearances_5"].apply(lambda values: values.lt(5).sum())
+    
     return team_features.reset_index()
 
 
