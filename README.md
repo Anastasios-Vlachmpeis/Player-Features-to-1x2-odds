@@ -1,14 +1,14 @@
 # Medium-Large European Leagues player-form odds research
 
-Research project testing whether recent player-level performance improves medium-large European prime leagues 1X2 predictions (currently Scottish Premiership only, to be extended to work with 5 more leagues), either on its own or when added to bookmaker closing probabilities.
+Research project testing whether recent player-level performance improves 1X2 predictions in Belgium, the Netherlands, Portugal, Scotland, and Turkey, either on its own or when added to bookmaker closing probabilities. Greece is built and audited but excluded from model development under the predeclared lineup-coverage rule.
 
-The active work is a leakage-safe, walk-forward comparison across the 2020/21 to 2024/25 seasons. The main question is whether information from the announced starters' previous appearances adds predictive value beyond the closing market.
+The active work is a leakage-safe, walk-forward comparison across the 2020/21 to 2024/25 development seasons. The untouched 2025/26 season is reserved for the final examination. The main question is whether information from the announced starters' previous appearances adds predictive value beyond the closing market.
 
 ## Current experiment
 
-The current modelling dataset joins:
+The current modelling dataset joins, independently inside each league:
 
-- (Scottish) match results and player-match statistics from TheStatsAPI
+- Match results and player-match statistics from TheStatsAPI
 - Historical 1X2 closing odds from Football-Data.co.uk, stored in `odds.db`
 - Rolling player form calculated only from appearances before each target match
 
@@ -127,7 +127,7 @@ data/processed/all_leagues/final_2025_26_model_dataset.csv
 Omitting `--include-final` is a deliberate safeguard: a normal development build
 cannot contain 2025/26 rows.
 
-## Run the six-league development evaluation
+## Run the five-league development evaluation
 
 With `data/processed/all_leagues/development_model_dataset.csv` already built:
 
@@ -135,12 +135,51 @@ With `data/processed/all_leagues/development_model_dataset.csv` already built:
 .venv\Scripts\python scotland_research\evaluate_models.py
 ```
 
-The evaluator pools all six leagues inside each chronological development fold.
+The default command runs both research branches:
+
+- one equally weighted shared model with league indicators;
+- five identically configured models fitted separately by league.
+
+Dixon-Coles and Dixon-Coles with player form are fitted only in the
+league-specific branch. To run a quick primary-comparison pass while developing
+the reporting pipeline:
+
+```powershell
+.venv\Scripts\python scotland_research\evaluate_models.py `
+  --models closing_market market_plus_player_form
+```
+
+Outputs include match-level predictions, league and equal-league metrics,
+fold-level metrics, coefficient tables, and an audit proving that every league
+receives equal total weight in pooled training.
+
+The evaluator currently pools Scotland, Belgium, Portugal, the Netherlands,
+and Turkey inside each chronological development fold. Greece remains in the
+combined source dataset but is temporarily excluded because its 2020/21 and
+2021/22 data do not provide usable starting lineups.
 It refuses to run if any league-season is absent or if the held-out 2025/26
 season is present. Outputs are written to
-`artifacts/all_leagues_development_evaluation`. The
+`artifacts/five_league_development_evaluation`. The
 `fold_league_counts.csv` output makes each country's train/test match count
 visible in every fold.
+
+## Build the development-analysis visualizations
+
+After pooled and league-specific predictions have been generated:
+
+```powershell
+.venv\Scripts\python scotland_research\visuals\scripts\development_analysis.py
+```
+
+PNG files are written to
+`scotland_research/visuals/development_analysis`:
+
+1. league-season coverage heatmaps;
+2. analytical-sample construction flow;
+3. chronological experiment timeline;
+4. player-model comparison with the closing market by league;
+5. shared versus separately trained model comparison;
+6. home/draw/away probability reliability plots.
 
 ## Data safeguards
 

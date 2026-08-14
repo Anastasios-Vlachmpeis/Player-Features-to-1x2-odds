@@ -21,7 +21,11 @@ class PlayerFormLightGBMModel:
         self.name = name
         self._fitted_model: LGBMClassifier | None = None
 
-    def fit(self, train: pd.DataFrame) -> None:
+    def fit(
+        self,
+        train: pd.DataFrame,
+        sample_weight: np.ndarray | None = None,
+    ) -> None:
         model = LGBMClassifier(
             objective="multiclass",
             num_class=len(CLASS_ORDER),
@@ -37,7 +41,11 @@ class PlayerFormLightGBMModel:
             force_col_wise=True,
             verbosity=-1,
         )
-        model.fit(train[self._feature_columns], train["result_3way"])
+        model.fit(
+            train[self._feature_columns],
+            train["result_3way"],
+            sample_weight=sample_weight,
+        )
         self._fitted_model = model
 
     def predict_proba(self, test: pd.DataFrame) -> np.ndarray:

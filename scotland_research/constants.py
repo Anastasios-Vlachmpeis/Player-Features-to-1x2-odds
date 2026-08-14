@@ -1,4 +1,4 @@
-# Shared constants for six-league walk-forward model evaluation.
+# Shared constants for multi-league walk-forward model evaluation.
 
 from __future__ import annotations
 
@@ -16,9 +16,12 @@ DEFAULT_MODEL_DATASET = (
     / "all_leagues"
     / "development_model_dataset.csv"
 )
-DEFAULT_EVALUATION_DIR = PROJECT_ROOT / "artifacts" / "all_leagues_development_evaluation"
+DEFAULT_EVALUATION_DIR = PROJECT_ROOT / "artifacts" / "five_league_development_evaluation"
 
-EXPECTED_LEAGUES = frozenset(LEAGUES)
+# Greece is retained in the combined dataset but temporarily excluded from
+# evaluation because 2020-21 has no valid starting lineups and 2021-22 has one.
+DEVELOPMENT_EXCLUDED_LEAGUES = frozenset({"greece"})
+EXPECTED_LEAGUES = frozenset(LEAGUES).difference(DEVELOPMENT_EXCLUDED_LEAGUES)
 
 CLASS_ORDER = ["H", "D", "A"]
 PLAYER_FEATURES = [f"diff_{feature}" for feature in TEAM_FEATURES]

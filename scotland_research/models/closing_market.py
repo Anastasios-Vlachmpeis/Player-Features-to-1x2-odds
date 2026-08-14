@@ -9,7 +9,11 @@ import pandas as pd
 class ClosingMarket:
     name = "closing_market"
 
-    def fit(self, train: pd.DataFrame) -> None:
+    def fit(
+        self,
+        train: pd.DataFrame,
+        sample_weight: np.ndarray | None = None,
+    ) -> None:
         return None
 
     def predict_proba(self, test: pd.DataFrame) -> np.ndarray:

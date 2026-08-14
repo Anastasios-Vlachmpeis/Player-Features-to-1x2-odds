@@ -9,6 +9,7 @@ import pandas as pd
 
 from constants import (
     CLASS_ORDER,
+    DEVELOPMENT_EXCLUDED_LEAGUES,
     DEVELOPMENT_FOLDS,
     EXPECTED_LEAGUES,
 )
@@ -36,8 +37,25 @@ def _league_values(frame: pd.DataFrame, label: str) -> set[str]:
     return set(frame["league"].astype(str).str.strip().str.lower())
 
 
+def select_development_leagues(dataset: pd.DataFrame) -> pd.DataFrame:
+    """Select the declared evaluation leagues without deleting source rows."""
+    observed_leagues = _league_values(dataset, "Development dataset")
+    allowed_leagues = EXPECTED_LEAGUES.union(DEVELOPMENT_EXCLUDED_LEAGUES)
+    unexpected_leagues = observed_leagues.difference(allowed_leagues)
+    if unexpected_leagues:
+        raise ValueError(
+            "Development dataset contains unexpected leagues: "
+            f"{sorted(unexpected_leagues)}"
+        )
+
+    normalized_leagues = dataset["league"].astype(str).str.strip().str.lower()
+    selected = dataset.loc[normalized_leagues.isin(EXPECTED_LEAGUES)].copy()
+    selected["league"] = normalized_leagues.loc[selected.index]
+    return selected
+
+
 def validate_development_dataset(dataset: pd.DataFrame) -> None:
-    """Enforce the locked six-league, five-season development boundary."""
+    """Enforce the declared five-league, five-season development boundary."""
     if "season" not in dataset.columns:
         raise ValueError("Development dataset is missing the required season column")
 
@@ -112,6 +130,7 @@ def run_walk_forward(
     coefficient_frames: list[pd.DataFrame] = []
     tuning_artifact_frames: list[pd.DataFrame] = []
 
+    dataset = select_development_leagues(dataset)
     validate_development_dataset(dataset)
 
     for test_season, train_seasons in DEVELOPMENT_FOLDS:

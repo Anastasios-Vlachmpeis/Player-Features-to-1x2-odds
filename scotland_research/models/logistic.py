@@ -24,9 +24,24 @@ def aligned_model_probabilities(model: object, features: pd.DataFrame) -> np.nda
     return raw[:, [classes.index(label) for label in CLASS_ORDER]]
 
 
-def fit_logistic_model(train: pd.DataFrame, feature_columns: list[str]) -> object:
+def fit_logistic_model(
+    train: pd.DataFrame,
+    feature_columns: list[str],
+    sample_weight: np.ndarray | None = None,
+) -> object:
     model = build_logistic_pipeline()
-    model.fit(train[feature_columns], train["result_3way"])
+    fit_parameters: dict[str, np.ndarray] = {}
+    if sample_weight is not None:
+        weights = np.asarray(sample_weight, dtype=float)
+        if weights.shape != (len(train),):
+            raise ValueError("sample_weight must contain one value per training match")
+        if not np.isfinite(weights).all() or np.any(weights <= 0):
+            raise ValueError("sample_weight must contain finite positive values")
+        fit_parameters = {
+            "standardscaler__sample_weight": weights,
+            "logisticregression__sample_weight": weights,
+        }
+    model.fit(train[feature_columns], train["result_3way"], **fit_parameters)
     return model
 
 
@@ -34,8 +49,9 @@ def fit_logistic(
     train: pd.DataFrame,
     test: pd.DataFrame,
     feature_columns: list[str],
+    sample_weight: np.ndarray | None = None,
 ) -> tuple[np.ndarray, object]:
-    model = fit_logistic_model(train, feature_columns)
+    model = fit_logistic_model(train, feature_columns, sample_weight=sample_weight)
     return aligned_model_probabilities(model, test[feature_columns]), model
 
 

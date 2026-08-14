@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 from constants import MARKET_FEATURES, PLAYER_FEATURES
@@ -20,8 +21,16 @@ class MarketPlusPlayerFormModel:
         self._feature_columns = MARKET_FEATURES + selected
         self.name = name
 
-    def fit(self, train: pd.DataFrame) -> None:
-        self._fitted_model = fit_logistic_model(train, self._feature_columns)
+    def fit(
+        self,
+        train: pd.DataFrame,
+        sample_weight: np.ndarray | None = None,
+    ) -> None:
+        self._fitted_model = fit_logistic_model(
+            train,
+            self._feature_columns,
+            sample_weight=sample_weight,
+        )
 
     def predict_proba(self, test: pd.DataFrame) -> np.ndarray:
         if self._fitted_model is None:

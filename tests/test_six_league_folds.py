@@ -11,8 +11,15 @@ SCOTLAND_RESEARCH_DIR = Path(__file__).resolve().parents[1] / "scotland_research
 if str(SCOTLAND_RESEARCH_DIR) not in sys.path:
     sys.path.insert(0, str(SCOTLAND_RESEARCH_DIR))
 
-from constants import DEVELOPMENT_FOLDS, EXPECTED_LEAGUES  # noqa: E402
-from evaluation.walk_forward import validate_development_dataset  # noqa: E402
+from constants import (  # noqa: E402
+    DEVELOPMENT_EXCLUDED_LEAGUES,
+    DEVELOPMENT_FOLDS,
+    EXPECTED_LEAGUES,
+)
+from evaluation.walk_forward import (  # noqa: E402
+    select_development_leagues,
+    validate_development_dataset,
+)
 from league_config import DEVELOPMENT_SEASONS, FINAL_SEASON  # noqa: E402
 
 
@@ -46,8 +53,23 @@ def test_development_folds_are_expanding_and_stop_at_2024_25():
     assert all(FINAL_SEASON not in seasons for _, seasons in DEVELOPMENT_FOLDS)
 
 
-def test_complete_six_league_development_dataset_is_accepted():
+def test_complete_five_league_development_dataset_is_accepted():
     validate_development_dataset(complete_development_frame())
+
+
+def test_greece_is_explicitly_removed_before_fold_validation():
+    dataset = complete_development_frame()
+    greek_rows = dataset.loc[dataset["league"].eq("scotland")].copy()
+    greek_rows["league"] = "greece"
+    greek_rows["match_id"] = "greece:" + greek_rows["season"]
+
+    selected = select_development_leagues(
+        pd.concat([dataset, greek_rows], ignore_index=True)
+    )
+
+    assert DEVELOPMENT_EXCLUDED_LEAGUES == frozenset({"greece"})
+    assert set(selected["league"]) == EXPECTED_LEAGUES
+    assert "greece" not in set(selected["league"])
 
 
 def test_missing_league_in_one_season_is_rejected():

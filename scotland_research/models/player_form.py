@@ -22,8 +22,16 @@ class PlayerFormModel:
         self.name = name
         self._fitted_model: object | None = None
 
-    def fit(self, train: pd.DataFrame) -> None:
-        self._fitted_model = fit_logistic_model(train, self._feature_columns)
+    def fit(
+        self,
+        train: pd.DataFrame,
+        sample_weight: np.ndarray | None = None,
+    ) -> None:
+        self._fitted_model = fit_logistic_model(
+            train,
+            self._feature_columns,
+            sample_weight=sample_weight,
+        )
 
     def predict_proba(self, test: pd.DataFrame) -> np.ndarray:
         if self._fitted_model is None:

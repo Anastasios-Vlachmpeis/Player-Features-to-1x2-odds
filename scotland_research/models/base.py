@@ -11,7 +11,11 @@ import pandas as pd
 class MatchPredictor(Protocol):
     name: str
 
-    def fit(self, train: pd.DataFrame) -> None: ...
+    def fit(
+        self,
+        train: pd.DataFrame,
+        sample_weight: np.ndarray | None = None,
+    ) -> None: ...
 
     def predict_proba(self, test: pd.DataFrame) -> np.ndarray: ...
 
