@@ -21,4 +21,5 @@ tests/
 !tests/
 tests/*
 !tests/test_dixon_coles_validity.py
+!tests/test_all_leagues_dataset.py
 archive/

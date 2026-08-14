@@ -93,6 +93,40 @@ Then run the match collector followed by the resumable player-stat collector:
 .venv\Scripts\python statsapi_scripts\statsapi_scotland\fetch_player_stats.py
 ```
 
+## Build the six-league modelling dataset
+
+The shared builder runs the existing leakage-safe feature pipeline independently
+for Scotland, Greece, Belgium, Portugal, the Netherlands, and Turkey, then adds a
+`league` column and combines the finished model tables.
+
+During development, build only seasons through 2024/25:
+
+```powershell
+.venv\Scripts\python scotland_research\build_all_leagues.py
+```
+
+This writes the combined development dataset to:
+
+```text
+data/processed/all_leagues/development_model_dataset.csv
+```
+
+After the model and feature specification is frozen and all 2025/26 source data
+has been collected, build the held-out final table explicitly:
+
+```powershell
+.venv\Scripts\python scotland_research\build_all_leagues.py --include-final
+```
+
+This additionally writes:
+
+```text
+data/processed/all_leagues/final_2025_26_model_dataset.csv
+```
+
+Omitting `--include-final` is a deliberate safeguard: a normal development build
+cannot contain 2025/26 rows.
+
 ## Run the current evaluations
 
 With `data/processed/scotland/scotland_model_dataset.csv` already built:

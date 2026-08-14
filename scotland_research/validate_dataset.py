@@ -1,4 +1,4 @@
-#Validate the local Scotland match and player-stat backfill
+"""Validate one league's local match and player-stat backfill."""
 
 from __future__ import annotations
 
@@ -11,17 +11,24 @@ from pathlib import Path
 import pandas as pd
 
 from feature_req import NPXG_FIELD, NPXG_MAX_SEASON_COVERAGE_DROP, NPXG_MIN_PLAYER_COVERAGE, USE_NPXG_FEATURE
+from league_config import (
+    ALL_RESEARCH_SEASONS,
+    DEVELOPMENT_SEASONS,
+    LEAGUES,
+    LeagueConfig,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = PROJECT_ROOT / "data" / "statsapi" / "scotland"
+SCOTLAND_CONFIG = LEAGUES["scotland"]
+DATA_DIR = SCOTLAND_CONFIG.data_dir
 MATCHES_CSV = DATA_DIR / "matches.csv"
 PLAYER_STATS_CSV = DATA_DIR / "player_match_stats.csv"
 RAW_DIR = DATA_DIR / "player_stats_raw"
 ODDS_DB = PROJECT_ROOT / "odds.db"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "artifacts" / "scotland_data_validation"
 
-DIVISION = "SC0"
-SEASONS = ["2020-21", "2021-22", "2022-23", "2023-24", "2024-25"]
+DIVISION = SCOTLAND_CONFIG.division
+SEASONS = list(DEVELOPMENT_SEASONS)
 PLAYER_DATA_THRESHOLD = 0.90
 STARTER_COVERAGE_THRESHOLD = 0.90
 IDENTITY_THRESHOLD = 0.99
@@ -57,10 +64,7 @@ PLAYER_REQUIRED_COLUMNS = {
     *CORE_FIELDS,
 }
 
-TEAM_ALIASES = {
-    "hamiltonacademical": "hamilton",
-    "heartofmidlothian": "hearts",
-}
+TEAM_ALIASES = SCOTLAND_CONFIG.team_aliases
 
 
 def parse_args() -> argparse.Namespace:
@@ -70,6 +74,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_OUTPUT_DIR,
         help=f"Directory for validation CSVs (default: {DEFAULT_OUTPUT_DIR})",
+    )
+    parser.add_argument("--league", choices=list(LEAGUES), default="scotland")
+    parser.add_argument(
+        "--include-final",
+        action="store_true",
+        help="Include 2025-26. Omit this during development.",
     )
     return parser.parse_args()
 
@@ -85,12 +95,16 @@ def require_columns(frame: pd.DataFrame, required: set[str], source: Path) -> No
         raise ValueError(f"{source} is missing required columns: {', '.join(missing)}")
 
 
-def normalize_team_name(name: object) -> str:
+def normalize_team_name(
+    name: object,
+    team_aliases: dict[str, str] | None = None,
+) -> str:
     value = unicodedata.normalize("NFKD", str(name or ""))
     value = value.encode("ascii", "ignore").decode("ascii").lower().strip()
     value = re.sub(r"\b(fc|cf|sc|afc|fk|sk)\b", "", value)
     value = re.sub(r"[^a-z0-9]", "", value)
-    return TEAM_ALIASES.get(value, value)
+    aliases = TEAM_ALIASES if team_aliases is None else team_aliases
+    return aliases.get(value, value)
 
 
 def as_bool(series: pd.Series) -> pd.Series:
@@ -101,29 +115,41 @@ def as_bool(series: pd.Series) -> pd.Series:
     ).fillna(False)
 
 
-def match_key(frame: pd.DataFrame) -> pd.Series:
+def match_key(
+    frame: pd.DataFrame,
+    team_aliases: dict[str, str] | None = None,
+) -> pd.Series:
     return (
         frame["season"].astype("string")
         + "|"
         + frame["match_date"].astype("string")
         + "|"
-        + frame["home_team"].map(normalize_team_name)
+        + frame["home_team"].map(
+            lambda name: normalize_team_name(name, team_aliases)
+        )
         + "|"
-        + frame["away_team"].map(normalize_team_name)
+        + frame["away_team"].map(
+            lambda name: normalize_team_name(name, team_aliases)
+        )
     )
 
 
-def load_inputs() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    for path in (MATCHES_CSV, PLAYER_STATS_CSV, ODDS_DB):
+def load_inputs(
+    config: LeagueConfig = SCOTLAND_CONFIG,
+    seasons: tuple[str, ...] = DEVELOPMENT_SEASONS,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    matches_csv = config.matches_csv
+    player_stats_csv = config.player_stats_csv
+    for path in (matches_csv, player_stats_csv, ODDS_DB):
         require_file(path)
 
-    matches = pd.read_csv(MATCHES_CSV, dtype="string", keep_default_na=True)
-    players = pd.read_csv(PLAYER_STATS_CSV, dtype="string", keep_default_na=True)
-    require_columns(matches, MATCH_REQUIRED_COLUMNS, MATCHES_CSV)
-    require_columns(players, PLAYER_REQUIRED_COLUMNS, PLAYER_STATS_CSV)
+    matches = pd.read_csv(matches_csv, dtype="string", keep_default_na=True)
+    players = pd.read_csv(player_stats_csv, dtype="string", keep_default_na=True)
+    require_columns(matches, MATCH_REQUIRED_COLUMNS, matches_csv)
+    require_columns(players, PLAYER_REQUIRED_COLUMNS, player_stats_csv)
 
-    matches = matches[matches["season"].isin(SEASONS)].copy()
-    players = players[players["season"].isin(SEASONS)].copy()
+    matches = matches[matches["season"].isin(seasons)].copy()
+    players = players[players["season"].isin(seasons)].copy()
     matches["match_date"] = pd.to_datetime(matches["utc_date"], utc=True).dt.strftime("%Y-%m-%d")
     matches["home_score"] = pd.to_numeric(matches["home_score"], errors="coerce")
     matches["away_score"] = pd.to_numeric(matches["away_score"], errors="coerce")
@@ -134,7 +160,7 @@ def load_inputs() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     for field in CORE_FIELDS[1:]:
         players[field] = pd.to_numeric(players[field], errors="coerce")
 
-    placeholders = ",".join("?" for _ in SEASONS)
+    placeholders = ",".join("?" for _ in seasons)
     query = f"""
         SELECT season, match_date, home_team, away_team,
                full_time_home, full_time_away, result_3way,
@@ -143,12 +169,16 @@ def load_inputs() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         WHERE division = ? AND season IN ({placeholders})
     """
     with sqlite3.connect(ODDS_DB) as connection:
-        football_data = pd.read_sql_query(query, connection, params=[DIVISION, *SEASONS])
+        football_data = pd.read_sql_query(
+            query,
+            connection,
+            params=[config.division, *seasons],
+        )
 
     football_data["match_date"] = football_data["match_date"].astype("string")
     football_data["season"] = football_data["season"].astype("string")
-    football_data["join_key"] = match_key(football_data)
-    matches["join_key"] = match_key(matches)
+    football_data["join_key"] = match_key(football_data, config.team_aliases)
+    matches["join_key"] = match_key(matches, config.team_aliases)
     return matches, players, football_data
 
 
@@ -172,12 +202,18 @@ def build_match_validation(
     matches: pd.DataFrame,
     players: pd.DataFrame,
     football_data: pd.DataFrame,
+    *,
+    config: LeagueConfig = SCOTLAND_CONFIG,
 ) -> pd.DataFrame:
     if matches["match_id"].duplicated().any():
         duplicate_ids = matches.loc[matches["match_id"].duplicated(False), "match_id"].tolist()
-        raise ValueError(f"Duplicate match IDs in {MATCHES_CSV}: {duplicate_ids[:10]}")
+        raise ValueError(
+            f"Duplicate match IDs in {config.matches_csv}: {duplicate_ids[:10]}"
+        )
     if football_data["join_key"].duplicated().any():
-        raise ValueError("Football-Data contains duplicate Scotland season/date/team join keys")
+        raise ValueError(
+            f"Football-Data contains duplicate {config.name} season/date/team join keys"
+        )
 
     odds_columns = [
         "join_key",
@@ -254,7 +290,10 @@ def build_match_validation(
         report["starters"] > 0
     ) & report["starters_with_minutes"].eq(report["starters"])
 
-    raw_paths = [RAW_DIR / season / f"{match_id}.json" for season, match_id in zip(report["season"], report["match_id"])]
+    raw_paths = [
+        config.raw_dir / season / f"{match_id}.json"
+        for season, match_id in zip(report["season"], report["match_id"])
+    ]
     report["raw_json_exists"] = [path.exists() for path in raw_paths]
 
     valid_team_ids: dict[str, bool] = {}
@@ -321,10 +360,15 @@ def safe_rate(numerator: int | float, denominator: int | float) -> float:
     return float(numerator / denominator) if denominator else 0.0
 
 
-def build_season_coverage(match_report: pd.DataFrame, players: pd.DataFrame, duplicate_rows: pd.DataFrame) -> pd.DataFrame:
+def build_season_coverage(
+    match_report: pd.DataFrame,
+    players: pd.DataFrame,
+    duplicate_rows: pd.DataFrame,
+    seasons: tuple[str, ...] = DEVELOPMENT_SEASONS,
+) -> pd.DataFrame:
     
     rows: list[dict[str, object]] = []
-    for season in SEASONS:
+    for season in seasons:
         matches = match_report[match_report["season"] == season]
         eligible = matches[matches["football_data_match"]]
         eligible_ids = set(eligible["match_id"])
@@ -380,7 +424,11 @@ def build_season_coverage(match_report: pd.DataFrame, players: pd.DataFrame, dup
     return summary
 
 
-def build_field_coverage(match_report: pd.DataFrame, players: pd.DataFrame) -> pd.DataFrame:
+def build_field_coverage(
+    match_report: pd.DataFrame,
+    players: pd.DataFrame,
+    seasons: tuple[str, ...] = DEVELOPMENT_SEASONS,
+) -> pd.DataFrame:
     
     eligible_ids = set(match_report.loc[match_report["football_data_match"], "match_id"])
     eligible_players = players[players["match_id"].isin(eligible_ids)].copy()
@@ -395,7 +443,7 @@ def build_field_coverage(match_report: pd.DataFrame, players: pd.DataFrame) -> p
     
     rows: list[dict[str, object]] = []
 
-    for season in SEASONS:
+    for season in seasons:
         season_players = eligible_players[eligible_players["season"] == season]
         cohorts = {
             "played_players": season_players[season_players["played"]],
@@ -426,10 +474,13 @@ def build_field_coverage(match_report: pd.DataFrame, players: pd.DataFrame) -> p
     return pd.DataFrame(rows)
 
 
-def validate_npxg_coverage(field_coverage: pd.DataFrame) -> None:
+def validate_npxg_coverage(
+    field_coverage: pd.DataFrame,
+    seasons: tuple[str, ...] = DEVELOPMENT_SEASONS,
+) -> None:
 
     # Validate played-player npxG coverage before allowing the feature into modelling
-    npxg = field_coverage[(field_coverage["cohort"] == "played_players") & (field_coverage["field"] == NPXG_FIELD)].set_index("season")["coverage"].reindex(SEASONS)
+    npxg = field_coverage[(field_coverage["cohort"] == "played_players") & (field_coverage["field"] == NPXG_FIELD)].set_index("season")["coverage"].reindex(seasons)
     low_coverage = npxg[npxg < NPXG_MIN_PLAYER_COVERAGE]
 
     coverage_drop = (npxg.shift(1) - npxg).dropna()
@@ -443,12 +494,26 @@ def validate_npxg_coverage(field_coverage: pd.DataFrame) -> None:
     
     print(f"WARNING: {message}; npxG remains disabled")
 
-def write_reports(output_dir: Path) -> dict[str, Path]:
-    matches, players, football_data = load_inputs()
+def write_reports(
+    output_dir: Path,
+    config: LeagueConfig = SCOTLAND_CONFIG,
+    seasons: tuple[str, ...] = DEVELOPMENT_SEASONS,
+) -> dict[str, Path]:
+    matches, players, football_data = load_inputs(config, seasons)
     duplicate_rows = find_player_duplicates(players)
-    match_report = build_match_validation(matches, players, football_data)
-    season_coverage = build_season_coverage(match_report, players, duplicate_rows)
-    field_coverage = build_field_coverage(match_report, players)
+    match_report = build_match_validation(
+        matches,
+        players,
+        football_data,
+        config=config,
+    )
+    season_coverage = build_season_coverage(
+        match_report,
+        players,
+        duplicate_rows,
+        seasons,
+    )
+    field_coverage = build_field_coverage(match_report, players, seasons)
 
     missing_player_stats = match_report[~match_report["player_data_available"]].copy()
     additional_matches = match_report[~match_report["football_data_match"]].copy()
@@ -465,7 +530,7 @@ def write_reports(output_dir: Path) -> dict[str, Path]:
 
     season_coverage.to_csv(reports["season_coverage"], index=False)
     field_coverage.to_csv(reports["field_coverage"], index=False)
-    validate_npxg_coverage(field_coverage)
+    validate_npxg_coverage(field_coverage, seasons)
     match_report.to_csv(reports["match_validation"], index=False)
     missing_player_stats.to_csv(reports["missing_player_stats"], index=False)
     additional_matches.to_csv(reports["additional_unmatched_matches"], index=False)
@@ -481,10 +546,14 @@ def write_reports(output_dir: Path) -> dict[str, Path]:
 
 def main() -> None:
     args = parse_args()
+    config = LEAGUES[args.league]
+    seasons = ALL_RESEARCH_SEASONS if args.include_final else DEVELOPMENT_SEASONS
     output_dir = args.output_dir
+    if args.output_dir == DEFAULT_OUTPUT_DIR and args.league != "scotland":
+        output_dir = PROJECT_ROOT / "artifacts" / "all_leagues_data_validation" / args.league
     if not output_dir.is_absolute():
         output_dir = PROJECT_ROOT / output_dir
-    write_reports(output_dir)
+    write_reports(output_dir, config, seasons)
 
 
 if __name__ == "__main__":

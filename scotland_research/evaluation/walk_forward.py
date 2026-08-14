@@ -60,7 +60,17 @@ def run_walk_forward(
                         **scores,
                     }
                 )
-                output = test[["match_id", "season", "match_date", "home_team", "away_team", "result_3way"]].copy()
+                identity_columns = [
+                    "match_id",
+                    "season",
+                    "match_date",
+                    "home_team",
+                    "away_team",
+                    "result_3way",
+                ]
+                if "league" in test.columns:
+                    identity_columns.insert(0, "league")
+                output = test[identity_columns].copy()
                 output.insert(0, "model", variant_name)
                 output = pd.concat([output.reset_index(drop=True), probability_frame(probabilities)], axis=1)
                 output["predicted_result"] = np.asarray(CLASS_ORDER)[np.argmax(probabilities, axis=1)]

@@ -1,4 +1,4 @@
-#Build the cleaned Scotland match/result/closing-odds modelling table.
+"""Build one league's cleaned match/result/closing-odds modelling table."""
 
 from __future__ import annotations
 
@@ -7,6 +7,12 @@ from pathlib import Path
 
 import pandas as pd
 
+from league_config import (
+    ALL_RESEARCH_SEASONS,
+    DEVELOPMENT_SEASONS,
+    LEAGUES,
+    LeagueConfig,
+)
 from validate_dataset import build_match_validation, load_inputs
 
 
@@ -45,6 +51,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_OUTPUT_DIR,
         help=f"Processed output directory (default: {DEFAULT_OUTPUT_DIR})",
+    )
+    parser.add_argument("--league", choices=list(LEAGUES), default="scotland")
+    parser.add_argument(
+        "--include-final",
+        action="store_true",
+        help="Include 2025-26. Omit this during development.",
     )
     return parser.parse_args()
 
@@ -104,9 +116,18 @@ def validate_output(dataset: pd.DataFrame) -> None:
         raise ValueError("Devigged probabilities do not sum to one")
 
 
-def build_outputs(output_dir: Path) -> tuple[Path, Path]:
-    matches, players, football_data = load_inputs()
-    validation = build_match_validation(matches, players, football_data)
+def build_outputs(
+    output_dir: Path,
+    config: LeagueConfig = LEAGUES["scotland"],
+    seasons: tuple[str, ...] = DEVELOPMENT_SEASONS,
+) -> tuple[Path, Path]:
+    matches, players, football_data = load_inputs(config, seasons)
+    validation = build_match_validation(
+        matches,
+        players,
+        football_data,
+        config=config,
+    )
 
     dataset = validation[validation["model_ready"]].copy()
     dataset["odds_source"] = "football_data_closing"
@@ -150,7 +171,7 @@ def build_outputs(output_dir: Path) -> tuple[Path, Path]:
 
     malformed_lineups = exclusions[exclusions["exclusion_reason"] == "invalid_starter_count"]
     print(f"Saved modelling matches: {len(dataset)}")
-    print(f"Excluded malformed-lineup Premiership matches: {len(malformed_lineups)}")
+    print(f"Excluded malformed-lineup {config.name} matches: {len(malformed_lineups)}")
     print(f"Other non-target fixtures recorded: {len(exclusions) - len(malformed_lineups)}")
     print(f"Match dataset: {dataset_path}")
     print(f"Exclusions log: {exclusions_path}")
@@ -159,10 +180,14 @@ def build_outputs(output_dir: Path) -> tuple[Path, Path]:
 
 def main() -> None:
     args = parse_args()
+    config = LEAGUES[args.league]
+    seasons = ALL_RESEARCH_SEASONS if args.include_final else DEVELOPMENT_SEASONS
     output_dir = args.output_dir
+    if args.output_dir == DEFAULT_OUTPUT_DIR and args.league != "scotland":
+        output_dir = PROJECT_ROOT / "data" / "processed" / args.league
     if not output_dir.is_absolute():
         output_dir = PROJECT_ROOT / output_dir
-    build_outputs(output_dir)
+    build_outputs(output_dir, config, seasons)
 
 
 if __name__ == "__main__":

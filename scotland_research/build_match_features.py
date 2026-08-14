@@ -212,13 +212,20 @@ def validate_model_dataset(dataset: pd.DataFrame) -> None:
             raise ValueError(f"Incorrect home-away difference for {feature}")
 
 
-def build_output(match_dataset_path: Path, player_form_path: Path, team_strength_path: Path, lineup_features_path: Path, output_dir: Path) -> Path:
+def build_output(
+    match_dataset_path: Path,
+    player_form_path: Path,
+    team_strength_path: Path,
+    lineup_features_path: Path,
+    output_dir: Path,
+    output_name: str = MODEL_DATASET_NAME,
+) -> Path:
     matches = pd.read_csv(match_dataset_path, dtype={"match_id": "string"})
     player_form = pd.read_csv(player_form_path, dtype={"match_id": "string", "player_id": "string"})
     team_strength = pd.read_csv(team_strength_path, dtype={"match_id": "string"})
     lineup_features = pd.read_csv(lineup_features_path, dtype={"match_id": "string"})
     dataset = build_model_dataset(matches, player_form, team_strength, lineup_features)
-    output_path = output_dir / MODEL_DATASET_NAME
+    output_path = output_dir / output_name
     write_csv_atomic(dataset, output_path)
     print(f"Saved {len(dataset)} matches, {len(TEAM_FEATURES)} team features, and {len(dataset.columns)} total columns to {output_path}")
     return output_path
