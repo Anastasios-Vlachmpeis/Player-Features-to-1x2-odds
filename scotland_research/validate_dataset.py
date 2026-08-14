@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from feature_req import NPXG_FIELD, NPXG_MAX_SEASON_COVERAGE_DROP, NPXG_MIN_PLAYER_COVERAGE, USE_NPXG_FEATURE
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data" / "statsapi" / "scotland"
@@ -31,6 +32,7 @@ CORE_FIELDS = [
     "shooting.expected_goals",
     "shooting.expected_assists",
     "shooting.total_shots",
+    NPXG_FIELD
 ]
 
 MATCH_REQUIRED_COLUMNS = {
@@ -315,11 +317,8 @@ def safe_rate(numerator: int | float, denominator: int | float) -> float:
     return float(numerator / denominator) if denominator else 0.0
 
 
-def build_season_coverage(
-    match_report: pd.DataFrame,
-    players: pd.DataFrame,
-    duplicate_rows: pd.DataFrame,
-) -> pd.DataFrame:
+def build_season_coverage(match_report: pd.DataFrame, players: pd.DataFrame, duplicate_rows: pd.DataFrame) -> pd.DataFrame:
+    
     rows: list[dict[str, object]] = []
     for season in SEASONS:
         matches = match_report[match_report["season"] == season]
@@ -377,12 +376,19 @@ def build_season_coverage(
     return summary
 
 
-def build_field_coverage(
-    match_report: pd.DataFrame,
-    players: pd.DataFrame,
-) -> pd.DataFrame:
+def build_field_coverage(match_report: pd.DataFrame, players: pd.DataFrame) -> pd.DataFrame:
+    
     eligible_ids = set(match_report.loc[match_report["football_data_match"], "match_id"])
     eligible_players = players[players["match_id"].isin(eligible_ids)].copy()
+
+    # Calculate the percentage of matches with sufficiently populated npxG for both teams
+    npxg_starters = eligible_players[eligible_players["started"]].copy()
+    npxg_team_coverage = npxg_starters.groupby(["season", "match_id", "team_id"])[NPXG_FIELD].apply(lambda values: values.notna().mean())
+    npxg_team_usable = npxg_team_coverage.ge(NPXG_MIN_PLAYER_COVERAGE)
+    npxg_match_groups = npxg_team_usable.groupby(["season", "match_id"])
+    npxg_match_usable = npxg_match_groups.all() & npxg_match_groups.size().eq(2)
+    npxg_match_coverage = npxg_match_usable.groupby("season").mean()
+    
     rows: list[dict[str, object]] = []
 
     for season in SEASONS:
@@ -393,7 +399,10 @@ def build_field_coverage(
         }
         for cohort_name, cohort in cohorts.items():
             for field in CORE_FIELDS:
-                populated = cohort[field].notna().sum()
+                numeric = pd.to_numeric(cohort[field], errors="coerce")
+                populated = numeric.notna().sum()
+                nonzero = numeric.fillna(0.0).ne(0.0).sum()
+                
                 rows.append(
                     {
                         "season": season,
@@ -402,10 +411,33 @@ def build_field_coverage(
                         "rows": len(cohort),
                         "populated_rows": populated,
                         "coverage": safe_rate(populated, len(cohort)),
+                        "nonzero_rows": nonzero,
+                        "nonzero_rate": safe_rate(nonzero, len(cohort)),
+                        "mean": numeric.mean(),
+                        "std": numeric.std(),
+                        "usable_match_coverage": npxg_match_coverage.get(season, 0.0) if field == NPXG_FIELD else float("nan"),
                     }
                 )
+
     return pd.DataFrame(rows)
 
+
+def validate_npxg_coverage(field_coverage: pd.DataFrame) -> None:
+
+    # Validate played-player npxG coverage before allowing the feature into modelling
+    npxg = field_coverage[(field_coverage["cohort"] == "played_players") & (field_coverage["field"] == NPXG_FIELD)].set_index("season")["coverage"].reindex(SEASONS)
+    low_coverage = npxg[npxg < NPXG_MIN_PLAYER_COVERAGE]
+
+    coverage_drop = (npxg.shift(1) - npxg).dropna()
+    collapsed = coverage_drop[coverage_drop > NPXG_MAX_SEASON_COVERAGE_DROP]
+
+    if low_coverage.empty and collapsed.empty: return
+    
+    message = f"npxG coverage contract failed; low_coverage={low_coverage.to_dict()}, collapses={collapsed.to_dict()}"
+    
+    if USE_NPXG_FEATURE: raise ValueError(message)
+    
+    print(f"WARNING: {message}; npxG remains disabled")
 
 def write_reports(output_dir: Path) -> dict[str, Path]:
     matches, players, football_data = load_inputs()
@@ -429,6 +461,7 @@ def write_reports(output_dir: Path) -> dict[str, Path]:
 
     season_coverage.to_csv(reports["season_coverage"], index=False)
     field_coverage.to_csv(reports["field_coverage"], index=False)
+    validate_npxg_coverage(field_coverage)
     match_report.to_csv(reports["match_validation"], index=False)
     missing_player_stats.to_csv(reports["missing_player_stats"], index=False)
     additional_matches.to_csv(reports["additional_unmatched_matches"], index=False)
