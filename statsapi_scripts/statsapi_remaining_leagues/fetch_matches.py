@@ -1,4 +1,4 @@
-#Fetch 2020-21 through 2024-25 matches for the five non-Scotland leagues
+"""Fetch 2025-26 matches for all six research leagues and merge them into CSVs."""
 
 from __future__ import annotations
 
@@ -23,11 +23,13 @@ LEAGUES = {
     "netherlands": {"name": "Netherlands", "competition_id": "comp_3809"},
     "portugal": {"name": "Portugal", "competition_id": "comp_8385"},
     "belgium": {"name": "Belgium", "competition_id": "comp_8531"},
+    "scotland": {"name": "Scotland", "competition_id": "comp_6387"},
 }
-SEASON_START_YEARS = range(2020, 2025)
+SEASON_START_YEARS = (2025,)
 PER_PAGE = 100
-DEFAULT_SLEEP_SECONDS = 5.5
-MINIMUM_SLEEP_SECONDS = 5.5
+# 2.1 seconds caps the theoretical request rate below the API limit of 30/minute.
+DEFAULT_SLEEP_SECONDS = 2.1
+MINIMUM_SLEEP_SECONDS = 2.1
 REQUEST_TIMEOUT_SECONDS = 60
 MAX_429_RETRIES = 5
 
@@ -75,7 +77,7 @@ class StatsApiClient:
         if sleep_seconds < MINIMUM_SLEEP_SECONDS:
             raise ValueError(
                 f"--sleep must be at least {MINIMUM_SLEEP_SECONDS} seconds "
-                "to remain below 12 requests per minute"
+                "to remain below 30 requests per minute"
             )
         self.session = requests.Session()
         self.session.headers.update({"Authorization": f"Bearer {api_key}"})
@@ -221,24 +223,48 @@ def write_matches(rows: list[dict[str, Any]], path: Path) -> None:
     temporary_path.replace(path)
 
 
+def load_existing_matches(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames != MATCH_COLUMNS:
+            raise RuntimeError(
+                f"Unexpected columns in {path}; expected {MATCH_COLUMNS}, "
+                f"found {reader.fieldnames}"
+            )
+        return list(reader)
+
+
+def merge_matches(
+    existing: list[dict[str, Any]],
+    fetched: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    merged: dict[str, dict[str, Any]] = {}
+    for row in [*existing, *fetched]:
+        match_id = str(row.get("match_id") or "").strip()
+        if not match_id:
+            raise RuntimeError("At least one match did not contain a match ID")
+        merged[match_id] = row
+    return sorted(
+        merged.values(),
+        key=lambda row: (str(row["utc_date"]), str(row["match_id"])),
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--league",
         action="append",
         choices=list(LEAGUES),
-        help="Fetch one league; repeat for several. Default: all five.",
+        help="Fetch one league; repeat for several. Default: all six.",
     )
     parser.add_argument(
         "--sleep",
         type=float,
         default=DEFAULT_SLEEP_SECONDS,
         help=f"Seconds between requests; minimum {MINIMUM_SLEEP_SECONDS}.",
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Fetch a league again even when its matches.csv already exists",
     )
     return parser.parse_args()
 
@@ -248,35 +274,21 @@ def main() -> None:
     if args.sleep < MINIMUM_SLEEP_SECONDS:
         raise SystemExit(
             f"--sleep must be at least {MINIMUM_SLEEP_SECONDS} seconds "
-            "to remain below 12 requests per minute"
+            "to remain below 30 requests per minute"
         )
 
     requested = selected_leagues(args.league)
-    pending = [
-        league
-        for league in requested
-        if args.overwrite or not (DATA_ROOT / league / "matches.csv").exists()
-    ]
-    for league in requested:
-        output = DATA_ROOT / league / "matches.csv"
-        if league not in pending:
-            print(f"Skipping {league}: {output} already exists")
-
-    if not pending:
-        print("Nothing fetched. Use --overwrite only to intentionally fetch again.")
-        return
-
     client = StatsApiClient(load_api_key(), args.sleep)
     failures: list[tuple[str, str]] = []
 
-    for league in pending:
+    for league in requested:
         config = LEAGUES[league]
         league_name = config["name"]
         competition_id = config["competition_id"]
         output = DATA_ROOT / league / "matches.csv"
         try:
             season_ids = find_seasons(client, league_name, competition_id)
-            rows: list[dict[str, Any]] = []
+            fetched_rows: list[dict[str, Any]] = []
             for start_year, season_id in season_ids.items():
                 label = season_label(start_year)
                 print(f"Fetching {league_name} {label}...")
@@ -288,17 +300,19 @@ def main() -> None:
                         "status": "finished",
                     },
                 )
-                rows.extend(
+                fetched_rows.extend(
                     match_row(match, competition_id, season_id, label)
                     for match in matches
                 )
                 print(f"  {len(matches)} matches")
 
-            rows.sort(key=lambda row: (str(row["utc_date"]), str(row["match_id"])))
-            if any(not row["match_id"] for row in rows):
-                raise RuntimeError("At least one match did not contain a match ID")
+            existing_rows = load_existing_matches(output)
+            rows = merge_matches(existing_rows, fetched_rows)
             write_matches(rows, output)
-            print(f"Saved {len(rows)} matches to {output}")
+            print(
+                f"Merged {len(fetched_rows)} 2025-26 matches into {output}; "
+                f"CSV now contains {len(rows)} matches"
+            )
         except (ApiError, RuntimeError) as error:
             failures.append((league_name, str(error)))
             print(f"FAILED {league_name}: {error}")

@@ -1,4 +1,4 @@
-#Fetch per-match player stats for the five saved non-Scotland league lists
+"""Fetch missing 2025-26 player stats for all six saved research leagues."""
 
 from __future__ import annotations
 
@@ -18,9 +18,11 @@ DATA_ROOT = PROJECT_ROOT / "data" / "statsapi"
 ENV_FILE = PROJECT_ROOT / ".env"
 
 BASE_URL = "https://api.thestatsapi.com/api"
-LEAGUES = ["greece", "turkey", "netherlands", "portugal", "belgium"]
-DEFAULT_SLEEP_SECONDS = 5.5
-MINIMUM_SLEEP_SECONDS = 5.5
+LEAGUES = ["greece", "turkey", "netherlands", "portugal", "belgium", "scotland"]
+TARGET_SEASON = "2025-26"
+# 2.1 seconds caps the theoretical request rate below the API limit of 30/minute.
+DEFAULT_SLEEP_SECONDS = 2.1
+MINIMUM_SLEEP_SECONDS = 2.1
 REQUEST_TIMEOUT_SECONDS = 60
 DEFAULT_MAX_REQUESTS = 8_500
 MAX_429_RETRIES = 5
@@ -61,7 +63,7 @@ class StatsApiClient:
         if sleep_seconds < MINIMUM_SLEEP_SECONDS:
             raise ValueError(
                 f"--sleep must be at least {MINIMUM_SLEEP_SECONDS} seconds "
-                "to remain below 12 requests per minute"
+                "to remain below 30 requests per minute"
             )
         self.session = requests.Session()
         self.session.headers.update({"Authorization": f"Bearer {api_key}"})
@@ -224,7 +226,7 @@ def parse_args() -> argparse.Namespace:
         "--league",
         action="append",
         choices=LEAGUES,
-        help="Fetch one league; repeat for several. Default: all five.",
+        help="Fetch one league; repeat for several. Default: all six.",
     )
     parser.add_argument(
         "--sleep",
@@ -246,7 +248,7 @@ def main() -> None:
     if args.sleep < MINIMUM_SLEEP_SECONDS:
         raise SystemExit(
             f"--sleep must be at least {MINIMUM_SLEEP_SECONDS} seconds "
-            "to remain below 12 requests per minute"
+            "to remain below 30 requests per minute"
         )
     if args.max_requests < 1:
         raise SystemExit("--max-requests must be positive")
@@ -259,13 +261,26 @@ def main() -> None:
     for league in requested:
         paths = league_paths(league)
         matches = load_matches(paths["matches"])
+        target_matches = [
+            match for match in matches if match.get("season") == TARGET_SEASON
+        ]
+        if not target_matches:
+            raise RuntimeError(
+                f"{paths['matches']} contains no {TARGET_SEASON} matches; "
+                "run fetch_matches.py first"
+            )
         missing = [
-            match for match in matches if not raw_path(paths["raw"], match).exists()
+            match
+            for match in target_matches
+            if not raw_path(paths["raw"], match).exists()
         ]
         paths_by_league[league] = paths
         league_matches[league] = matches
         league_missing[league] = missing
-        print(f"{league}: {len(matches)} matches, {len(missing)} still to fetch")
+        print(
+            f"{league}: {len(target_matches)} {TARGET_SEASON} matches, "
+            f"{len(missing)} still to fetch"
+        )
 
     total_missing = sum(len(matches) for matches in league_missing.values())
     if not total_missing:
