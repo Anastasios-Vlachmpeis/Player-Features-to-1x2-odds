@@ -10,7 +10,7 @@ import pandas as pd
 from build_match_dataset import DEFAULT_OUTPUT_DIR, MATCH_DATASET_NAME
 from build_player_form import PLAYER_FORM_NAME
 from validate_dataset import as_bool
-from feature_policy import USE_NPXG_FEATURE
+from feature_req import USE_NPXG_FEATURE
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MATCH_DATASET = DEFAULT_OUTPUT_DIR / MATCH_DATASET_NAME
