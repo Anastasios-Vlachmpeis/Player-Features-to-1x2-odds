@@ -1,0 +1,5 @@
+model,model_label,feature_set,base_feature_count,model_column_count,mean_log_loss,worst_fold_log_loss,fold_log_loss_std,mean_brier_score,selected_groups,group_count,best_observed_log_loss,selection_tolerance
+player_form_logistic,Pooled player-form logistic,team_strength,8,12,0.9577429406981521,0.9838083503103239,0.018984633935803578,0.5633694460942343,team_strength,1,0.9537499165802845,0.005
+market_plus_player_form,Pooled market + player-form logistic,lineup_continuity,7,11,0.9241552382808311,0.943279486677411,0.014156429479695545,0.5436855371248643,lineup_continuity,1,0.9241552382808311,0.005
+player_form_lightgbm,Pooled player-form LightGBM,legacy_player_form + team_strength,15,19,0.948893265335951,0.9828790718087536,0.02429751237280589,0.5603497024316775,legacy_player_form|team_strength,2,0.9450553860537407,0.005
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,team_strength,8,20,0.9461279070280193,0.9714049478215523,0.018101420393809086,0.5588634903318843,team_strength,1,0.9437783191738511,0.005

@@ -1,0 +1,37 @@
+model,model_label,feature_set,validation_season,train_matches,validation_matches,validation_leagues,base_feature_count,model_column_count,log_loss,brier_score,accuracy
+player_form_logistic,Pooled player-form logistic,selected_full,2022-23,2743,1335,5,9,13,0.9338807959212498,0.5478605816687698,0.5663729460187641
+player_form_logistic,Pooled player-form logistic,selected_full,2023-24,4078,1233,5,9,13,0.9327959828628478,0.5470119491830487,0.5659993886164353
+player_form_logistic,Pooled player-form logistic,selected_full,2024-25,5311,1327,5,9,13,0.9809288910356644,0.5799647190012156,0.5295321538769777
+player_form_logistic,Pooled player-form logistic,without_legacy_player_form,2022-23,2743,1335,5,8,12,0.9443096867543368,0.5535359583065548,0.5642711567236889
+player_form_logistic,Pooled player-form logistic,without_legacy_player_form,2023-24,4078,1233,5,8,12,0.9405875090467208,0.5518251315843982,0.5708526833718361
+player_form_logistic,Pooled player-form logistic,without_legacy_player_form,2024-25,5311,1327,5,8,12,0.9806905627624503,0.5808857366233354,0.5294485510730195
+player_form_logistic,Pooled player-form logistic,without_team_strength,2022-23,2743,1335,5,2,6,0.9900247368479267,0.5899697340822753,0.5257861324704047
+player_form_logistic,Pooled player-form logistic,without_team_strength,2023-24,4078,1233,5,2,6,0.9835581707648956,0.5851699317363526,0.5266590304845795
+player_form_logistic,Pooled player-form logistic,without_team_strength,2024-25,5311,1327,5,2,6,1.021011005768384,0.6074717213615001,0.5056122420070441
+player_form_logistic,Pooled player-form logistic,without_opponent_adjusted_form,2022-23,2743,1335,5,8,12,0.9341498081556356,0.547781927000199,0.5678402776493324
+player_form_logistic,Pooled player-form logistic,without_opponent_adjusted_form,2023-24,4078,1233,5,8,12,0.9328741451657431,0.5468288514581789,0.5703679538891521
+player_form_logistic,Pooled player-form logistic,without_opponent_adjusted_form,2024-25,5311,1327,5,8,12,0.983004284616866,0.5810360408108964,0.5307622827780347
+market_plus_player_form,Pooled market + player-form logistic,selected_full,2022-23,2743,1335,5,7,11,0.9182290247578748,0.5390341215826846,0.5821196660850662
+market_plus_player_form,Pooled market + player-form logistic,selected_full,2023-24,4078,1233,5,7,11,0.909989477884144,0.5352276079954273,0.5852672765517577
+market_plus_player_form,Pooled market + player-form logistic,selected_full,2024-25,5311,1327,5,7,11,0.943279486677411,0.5562237936172576,0.5739441902911165
+player_form_lightgbm,Pooled player-form LightGBM,selected_full,2022-23,2743,1335,5,15,19,0.9301553239423921,0.5468469356975498,0.5676587388329615
+player_form_lightgbm,Pooled player-form LightGBM,selected_full,2023-24,4078,1233,5,15,19,0.9326045277617355,0.5490151662754984,0.561238911609444
+player_form_lightgbm,Pooled player-form LightGBM,selected_full,2024-25,5311,1327,5,15,19,0.9828790718087536,0.5844655100206972,0.5301307411537167
+player_form_lightgbm,Pooled player-form LightGBM,without_legacy_player_form,2022-23,2743,1335,5,8,12,0.9340396422243424,0.5495472351950172,0.5622491751940366
+player_form_lightgbm,Pooled player-form LightGBM,without_legacy_player_form,2023-24,4078,1233,5,8,12,0.944184297608645,0.5558003248253163,0.5617473564321586
+player_form_lightgbm,Pooled player-form LightGBM,without_legacy_player_form,2024-25,5311,1327,5,8,12,0.983289027516838,0.5838379074580169,0.5343316715964737
+player_form_lightgbm,Pooled player-form LightGBM,without_team_strength,2022-23,2743,1335,5,7,11,0.9859846445978591,0.5868930234241203,0.5297279116505256
+player_form_lightgbm,Pooled player-form LightGBM,without_team_strength,2023-24,4078,1233,5,7,11,0.9821922902047258,0.5844542529742053,0.5232119048110744
+player_form_lightgbm,Pooled player-form LightGBM,without_team_strength,2024-25,5311,1327,5,7,11,1.011771709991104,0.6045966085802938,0.5035765049467741
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,selected_full,2022-23,2743,1335,5,9,22,0.9253435893059179,0.5445041453597284,0.5688027123360408
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,selected_full,2023-24,4078,1233,5,9,22,0.9227517992356038,0.5432472570759225,0.5655322635763186
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,selected_full,2024-25,5311,1327,5,9,22,0.970534307521308,0.5758538509225768,0.5469147371808527
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,without_legacy_player_form,2022-23,2743,1335,5,8,20,0.9300210537157279,0.5482069084771864,0.5650020927250237
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,without_legacy_player_form,2023-24,4078,1233,5,8,20,0.9317540641034704,0.5490612144391368,0.567260906191685
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,without_legacy_player_form,2024-25,5311,1327,5,8,20,0.9704498841171836,0.5759907835057858,0.5355716859475608
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,without_team_strength,2022-23,2743,1335,5,2,8,0.9882812170492636,0.5884523307131502,0.5346667476105895
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,without_team_strength,2023-24,4078,1233,5,2,8,0.9882286880476482,0.5877620698714849,0.5365385011514742
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,without_team_strength,2024-25,5311,1327,5,2,8,1.0141949442165594,0.6052796507520262,0.5051882568524327
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,without_opponent_adjusted_form,2022-23,2743,1335,5,8,20,0.9274885814436022,0.5456683567325511,0.570471287467041
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,without_opponent_adjusted_form,2023-24,4078,1233,5,8,20,0.9251571114078363,0.5447868066976588,0.5658346341617081
+expanded_player_form_lightgbm,Pooled expanded player-form LightGBM,without_opponent_adjusted_form,2024-25,5311,1327,5,8,20,0.9693698761670504,0.5754010399162447,0.545956090640336
