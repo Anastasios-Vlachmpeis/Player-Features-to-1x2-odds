@@ -1,0 +1,78 @@
+{
+  "specification_status": "fixed_for_final_evaluation",
+  "training_seasons": [
+    "2020-21",
+    "2021-22",
+    "2022-23",
+    "2023-24",
+    "2024-25"
+  ],
+  "test_season": "2025-26",
+  "included_leagues": [
+    "belgium",
+    "netherlands",
+    "portugal",
+    "scotland",
+    "turkey"
+  ],
+  "excluded_leagues": [
+    "greece"
+  ],
+  "selected_features_sha256": "2f3f3a757a26bcd3df93eb798ae8dd8135d82bb40ab4c695a39f0846c4655df4",
+  "models": {
+    "pooled": [
+      "frequency_baseline",
+      "closing_market",
+      "recalibrated_market",
+      "player_form",
+      "market_plus_player_form",
+      "player_form_lightgbm",
+      "expanded_player_form_lightgbm"
+    ],
+    "league_specific": [
+      "frequency_baseline",
+      "closing_market",
+      "recalibrated_market",
+      "player_form",
+      "market_plus_player_form",
+      "player_form_lightgbm",
+      "expanded_player_form_lightgbm",
+      "dixon_coles",
+      "dixon_coles_player_form"
+    ]
+  },
+  "primary_comparison": {
+    "training_scope": "pooled",
+    "baseline_model": "recalibrated_market",
+    "player_model": "market_plus_player_form"
+  },
+  "post_hoc_calibration": "none",
+  "metrics": {
+    "primary": "log_loss",
+    "secondary": [
+      "brier_score",
+      "rps"
+    ]
+  },
+  "aggregation": {
+    "primary": "equal_league",
+    "secondary": [
+      "match_weighted",
+      "individual_league"
+    ]
+  },
+  "uncertainty": {
+    "method": "paired_match_week_bootstrap",
+    "resample_within": [
+      "league",
+      "season"
+    ],
+    "repetitions": 10000,
+    "seed": 42
+  },
+  "random_seeds": {
+    "model": 42,
+    "bootstrap": 42
+  },
+  "default_output_directory": "artifacts/final_2025_26_evaluation"
+}
