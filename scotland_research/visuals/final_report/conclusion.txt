@@ -1,0 +1,1 @@
+On the primary equal-league log-loss measure, the player model showed a 0.143% deterioration relative to the recalibrated market. The paired 95% interval was -0.511% to 0.234%. The final test does not clearly distinguish the player model from the recalibrated market.

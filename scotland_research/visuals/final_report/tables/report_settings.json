@@ -1,0 +1,29 @@
+{
+  "included_leagues": [
+    "belgium",
+    "netherlands",
+    "portugal",
+    "scotland",
+    "turkey"
+  ],
+  "post_hoc_calibration": "none",
+  "prediction_source": "C:\\Users\\skous\\Super-League-odds-research\\artifacts\\final_2025_26_evaluation\\predictions.csv",
+  "primary_comparison": {
+    "baseline_model": "recalibrated_market",
+    "comparison": "Pooled players versus recalibrated market",
+    "enhanced_model": "market_plus_player_form",
+    "training_scope": "pooled"
+  },
+  "selected_features_sha256": "2f3f3a757a26bcd3df93eb798ae8dd8135d82bb40ab4c695a39f0846c4655df4",
+  "settings_file_sha256": "8d6345a77d6a26d80b83d58898f0c3a2d6be2fda8f8c9f643f60535ddb6275c6",
+  "test_season": "2025-26",
+  "uncertainty": {
+    "method": "paired_match_week_bootstrap",
+    "repetitions": 10000,
+    "resample_within": [
+      "league",
+      "season"
+    ],
+    "seed": 42
+  }
+}
