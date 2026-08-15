@@ -43,6 +43,7 @@ The comparison includes:
 - Dixon–Coles with player-form adjustments
 - player-form multinomial model
 - bookmaker closing market
+- recalibrated closing-market model without player information
 - closing market plus player-form features
 
 Performance is reported with log loss, Brier score, and accuracy. Log loss is the main comparison, with every model measured directly against the closing market.
@@ -174,7 +175,7 @@ the reporting pipeline:
 
 ```powershell
 .venv\Scripts\python scotland_research\evaluate_models.py `
-  --models closing_market market_plus_player_form
+  --models closing_market recalibrated_market market_plus_player_form
 ```
 
 Outputs include match-level predictions, league and equal-league metrics,

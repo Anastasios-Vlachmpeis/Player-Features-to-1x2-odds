@@ -21,6 +21,7 @@ from models.expanded_player_form_lightgbm import ExpandedPlayerFormLightGBMModel
 from models.market_plus_player_form import MarketPlusPlayerFormModel
 from models.player_form import PlayerFormModel
 from models.player_form_lightgbm import PlayerFormLightGBMModel
+from models.recalibrated_market import RecalibratedMarketModel
 
 
 DEFAULT_SELECTED_FEATURES = SELECTED_FEATURES_PATH
@@ -127,7 +128,11 @@ def main() -> None:
     validate_selected_columns(dataset, feature_map)
 
     # Market comparison reporting requires one closing-market prediction per match.
-    predictors = [ClosingMarket(), *build_selected_predictors(feature_map)]
+    predictors = [
+        ClosingMarket(),
+        RecalibratedMarketModel(),
+        *build_selected_predictors(feature_map),
+    ]
 
     # Existing walk-forward folds fit only on seasons preceding each test season.
     result = run_walk_forward(dataset, predictors)

@@ -15,6 +15,7 @@ labels = {
     "player_form": "Player history model",
     "dixon_coles_player_form": "Team + player history model",
     "closing_market": "Bookmaker closing odds",
+    "recalibrated_market": "Recalibrated bookmaker odds",
     "market_plus_player_form": "Bookmaker + player history model",
     "player_form_lightgbm":"Team + player history model (LGBM 1)",
     "expanded_player_form_lightgbm":"Team + player history model (LGBM 2)"

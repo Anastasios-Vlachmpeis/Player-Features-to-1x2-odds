@@ -21,7 +21,10 @@ from evaluation.multi_league import (  # noqa: E402
 )
 from league_config import DEVELOPMENT_SEASONS  # noqa: E402
 from models.closing_market import ClosingMarket  # noqa: E402
-from models.publication_suite import pooled_model_factories  # noqa: E402
+from models.publication_suite import (  # noqa: E402
+    league_specific_model_factories,
+    pooled_model_factories,
+)
 
 
 def minimal_dataset() -> pd.DataFrame:
@@ -132,3 +135,11 @@ def test_dixon_coles_is_not_available_in_the_pooled_suite():
     factories = pooled_model_factories([])
     assert "dixon_coles" not in factories
     assert "dixon_coles_player_form" not in factories
+
+
+def test_recalibrated_market_is_available_in_both_training_scopes():
+    pooled = pooled_model_factories([])
+    separate = league_specific_model_factories()
+
+    assert "recalibrated_market" in pooled
+    assert "recalibrated_market" in separate

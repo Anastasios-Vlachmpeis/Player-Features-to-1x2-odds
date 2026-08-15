@@ -14,6 +14,7 @@ from models.multinomial_gam import MultinomialGAMModel
 from models.player_form import PlayerFormModel
 from models.player_form_lightgbm import PlayerFormLightGBMModel
 from models.poisson_gam import PoissonGAMModel
+from models.recalibrated_market import RecalibratedMarketModel
 from models.tuned_lightgbm import TunedExpandedPlayerFormLightGBMModel, TunedPlayerFormLightGBMModel
 
 
@@ -49,6 +50,7 @@ def all_predictors() -> list[MatchPredictor]:
         DixonColesModel(),
         DixonColesPlayerFormModel(),
         ClosingMarket(),
+        RecalibratedMarketModel(),
         PlayerFormModel(),
         PlayerFormLightGBMModel(),
         ExpandedPlayerFormLightGBMModel(),

@@ -14,6 +14,7 @@ from models.frequency_baseline import FrequencyBaseline, LeagueFrequencyBaseline
 from models.market_plus_player_form import MarketPlusPlayerFormModel
 from models.player_form import PlayerFormModel
 from models.player_form_lightgbm import PlayerFormLightGBMModel
+from models.recalibrated_market import RecalibratedMarketModel
 
 
 PredictorFactory = Callable[[], MatchPredictor]
@@ -22,6 +23,7 @@ SelectedFeatureMap = Mapping[str, list[str]]
 COMMON_MODEL_NAMES = (
     "frequency_baseline",
     "closing_market",
+    "recalibrated_market",
     "player_form",
     "market_plus_player_form",
     "player_form_lightgbm",
@@ -105,6 +107,9 @@ def pooled_model_factories(
     factories: dict[str, PredictorFactory] = {
         "frequency_baseline": LeagueFrequencyBaseline,
         "closing_market": ClosingMarket,
+        "recalibrated_market": lambda: RecalibratedMarketModel(
+            context_features=league_effect_columns
+        ),
         "player_form": lambda: PlayerFormModel(
             player_features=player_form_columns
         ),
@@ -152,6 +157,7 @@ def league_specific_model_factories(
     factories: dict[str, PredictorFactory] = {
         "frequency_baseline": FrequencyBaseline,
         "closing_market": ClosingMarket,
+        "recalibrated_market": RecalibratedMarketModel,
         "player_form": lambda: PlayerFormModel(
             player_features=player_form_columns
         ),

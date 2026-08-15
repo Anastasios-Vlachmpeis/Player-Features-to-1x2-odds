@@ -94,6 +94,11 @@ def test_pooled_and_separate_models_receive_the_same_selected_base_features():
         *indicators,
     ]
 
+    pooled_recalibrated = pooled["recalibrated_market"]()
+    separate_recalibrated = separate["recalibrated_market"]()
+    assert separate_recalibrated._feature_columns == MARKET_FEATURES
+    assert pooled_recalibrated._feature_columns == [*MARKET_FEATURES, *indicators]
+
     pooled_expanded = pooled["expanded_player_form_lightgbm"]()
     separate_expanded = separate["expanded_player_form_lightgbm"]()
     expected_expanded = [
