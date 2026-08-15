@@ -3,15 +3,41 @@ player_form_logistic,team_strength,0,seed,,8,0.9577429406981521
 player_form_logistic,team_strength,1,add,key_passes_per90_sum_5,9,0.9518213471110789
 player_form_logistic,team_strength,2,remove,prior_team_matches,8,0.9503903724168719
 player_form_logistic,team_strength,3,add,adjusted_defensive_actions_lineup_mean_5,9,0.949566353743026
+player_form_logistic,team_strength,4,remove,elo_expected_result,8,0.9487621838341612
+player_form_logistic,team_strength,5,add,adjusted_key_passes_lineup_std_across_starters_5,9,0.9480560827689359
+player_form_logistic,team_strength,6,remove,attack_goal_rate_ewm,8,0.9473751391582566
+player_form_logistic,legacy_player_form + team_strength,0,seed,,15,0.9537499165802845
+player_form_logistic,legacy_player_form + team_strength,1,remove,prior_team_matches,14,0.9526116840142744
+player_form_logistic,legacy_player_form + team_strength,2,remove,starters_without_full_window,13,0.9513286932934315
+player_form_logistic,legacy_player_form + team_strength,3,remove,elo_expected_result,12,0.9505172070693083
+player_form_logistic,legacy_player_form + team_strength,4,remove,recent_minutes_sum_5,11,0.9498072347169275
+player_form_logistic,legacy_player_form + team_strength,5,remove,attack_goal_rate_ewm,10,0.9492009614298963
+player_form_logistic,legacy_player_form + team_strength,6,add,adjusted_key_passes_lineup_std_across_starters_5,11,0.948633922052397
 market_plus_player_form,lineup_continuity,0,seed,,7,0.9241552382808311
 market_plus_player_form,lineup_continuity,1,add,expected_goals_strength,8,0.9235675038784694
 market_plus_player_form,lineup_continuity,2,add,adjusted_defensive_actions_lineup_mean_5,9,0.9229918448904517
 market_plus_player_form,lineup_continuity,3,remove,mean_pairwise_prior_starts,8,0.9224825436288321
+market_plus_player_form,legacy_player_form,0,seed,,7,0.9244540286245435
+market_plus_player_form,legacy_player_form,1,remove,starters_without_full_window,6,0.9234194125392412
+market_plus_player_form,legacy_player_form,2,remove,starters_without_history,5,0.9228064862369363
+market_plus_player_form,legacy_player_form,3,remove,recent_minutes_sum_5,4,0.9221686077032321
+market_plus_player_form,legacy_player_form,4,add,expected_goals_strength,5,0.9216536473462866
 player_form_lightgbm,legacy_player_form + team_strength,0,seed,,15,0.948893265335951
 player_form_lightgbm,legacy_player_form + team_strength,1,add,key_passes_per90_lineup_mean_ewm,16,0.9471834935598809
 player_form_lightgbm,legacy_player_form + team_strength,2,add,adjusted_defensive_actions_lineup_mean_1,17,0.9460165751401481
 player_form_lightgbm,legacy_player_form + team_strength,3,add,rating_lineup_mean_3,18,0.9449686402071291
+player_form_lightgbm,legacy_player_form + team_strength,4,add,adjusted_rating_lineup_std_across_starters_5,19,0.9442017760152737
+player_form_lightgbm,team_strength + lineup_continuity + recency,0,seed,,32,0.9450553860537407
+player_form_lightgbm,team_strength + lineup_continuity + recency,1,remove,rating_lineup_mean_std_5,31,0.9440590981927175
+player_form_lightgbm,team_strength + lineup_continuity + recency,2,remove,defence_goal_rate_ewm,30,0.943496778696814
+player_form_lightgbm,team_strength + lineup_continuity + recency,3,add,gk_saves_per90_5,31,0.942760105680569
 expanded_player_form_lightgbm,team_strength,0,seed,,8,0.9461279070280193
 expanded_player_form_lightgbm,team_strength,1,add,key_passes_per90_sum_5,9,0.9415660955272607
 expanded_player_form_lightgbm,team_strength,2,add,adjusted_key_passes_lineup_mean_1,10,0.9409560219243596
 expanded_player_form_lightgbm,team_strength,3,remove,defence_goal_rate_ewm,9,0.939919303276425
+expanded_player_form_lightgbm,team_strength,4,add,gk_saves_per90_5,10,0.9393832397006006
+expanded_player_form_lightgbm,team_strength,5,remove,expected_goals_strength,9,0.9382501991657147
+expanded_player_form_lightgbm,team_strength,6,add,adjusted_key_passes_lineup_mean_ewm,10,0.9373018081465565
+expanded_player_form_lightgbm,team_strength + opponent_adjusted_form + position_and_distribution,0,seed,,52,0.9437783191738511
+expanded_player_form_lightgbm,team_strength + opponent_adjusted_form + position_and_distribution,1,add,key_passes_per90_sum_5,53,0.9429107214539503
+expanded_player_form_lightgbm,team_strength + opponent_adjusted_form + position_and_distribution,2,remove,adjusted_shots_lineup_mean_trend_1_5,52,0.9419807090777859
