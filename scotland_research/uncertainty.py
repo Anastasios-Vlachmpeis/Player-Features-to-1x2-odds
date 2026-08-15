@@ -256,3 +256,36 @@ def summarize_interval(
                 }
             )
     return pd.DataFrame(rows)
+
+
+def summarize_individual_league_intervals(
+    data: pd.DataFrame,
+    comparison: Mapping[str, str],
+    *,
+    repetitions: int = 10_000,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Run paired season-week intervals separately inside each league."""
+
+    frames: list[pd.DataFrame] = []
+    for league_number, league in enumerate(sorted(data["league"].unique())):
+        league_data = data[data["league"].eq(league)].copy()
+        league_seed = seed + league_number
+        samples = resample_league_season_weeks(
+            league_data,
+            repetitions=repetitions,
+            seed=league_seed,
+        )
+        summary = summarize_interval(
+            league_data,
+            samples,
+            comparison,
+            repetitions=repetitions,
+            seed=league_seed,
+        )
+        summary = summary[summary["weighting"].eq("match_weighted")].copy()
+        summary.insert(6, "league", league)
+        frames.append(summary)
+    if not frames:
+        raise ValueError("No leagues were available for individual intervals")
+    return pd.concat(frames, ignore_index=True)

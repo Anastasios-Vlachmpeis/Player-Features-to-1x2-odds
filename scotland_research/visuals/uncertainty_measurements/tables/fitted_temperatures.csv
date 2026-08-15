@@ -1,0 +1,5 @@
+training_scope,model,calibrated_model,test_season,calibration_seasons,calibration_matches,test_matches,temperature
+pooled,recalibrated_market,recalibrated_market_temperature_scaled,2023-24,2022-23,1335,1233,0.9051440457598088
+pooled,recalibrated_market,recalibrated_market_temperature_scaled,2024-25,2022-23;2023-24,2568,1327,0.9467233011816265
+pooled,market_plus_player_form,market_plus_player_form_temperature_scaled,2023-24,2022-23,1335,1233,0.8904484369079779
+pooled,market_plus_player_form,market_plus_player_form_temperature_scaled,2024-25,2022-23;2023-24,2568,1327,0.9393796492216978

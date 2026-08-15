@@ -1,0 +1,3 @@
+model,retain_calibration,equal_league_log_loss_improvement,equal_league_brier_improvement,worst_fold_log_loss_improvement,max_allowed_fold_deterioration,leagues_improved,leagues_required,equal_league_log_loss_improved,equal_league_brier_not_worse,no_fold_log_loss_deterioration_over_limit,log_loss_improved_in_league_majority
+recalibrated_market,False,-0.0015792378873527128,-0.0006752734087417738,-0.0014471445338665263,0.001,1,3,False,False,False,False
+market_plus_player_form,False,-0.002100138287225481,-0.0009144841210444075,-0.0019552641623723824,0.001,1,3,False,False,False,False

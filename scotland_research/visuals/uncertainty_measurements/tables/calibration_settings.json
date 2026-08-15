@@ -1,0 +1,41 @@
+{
+  "method": "single-temperature scaling",
+  "training": "earlier out-of-sample prediction seasons only",
+  "scope": "pooled recalibrated market and pooled player model",
+  "decision_rule": {
+    "equal_league_log_loss_improved": true,
+    "equal_league_brier_not_worse": true,
+    "maximum_fold_log_loss_deterioration": 0.001,
+    "log_loss_improved_in_at_least_three_of_five_leagues": true
+  },
+  "decisions": [
+    {
+      "model": "recalibrated_market",
+      "retain_calibration": false,
+      "equal_league_log_loss_improvement": -0.0015792378873527128,
+      "equal_league_brier_improvement": -0.0006752734087417738,
+      "worst_fold_log_loss_improvement": -0.0014471445338665263,
+      "max_allowed_fold_deterioration": 0.001,
+      "leagues_improved": 1,
+      "leagues_required": 3,
+      "equal_league_log_loss_improved": false,
+      "equal_league_brier_not_worse": false,
+      "no_fold_log_loss_deterioration_over_limit": false,
+      "log_loss_improved_in_league_majority": false
+    },
+    {
+      "model": "market_plus_player_form",
+      "retain_calibration": false,
+      "equal_league_log_loss_improvement": -0.002100138287225481,
+      "equal_league_brier_improvement": -0.0009144841210444075,
+      "worst_fold_log_loss_improvement": -0.0019552641623723824,
+      "max_allowed_fold_deterioration": 0.001,
+      "leagues_improved": 1,
+      "leagues_required": 3,
+      "equal_league_log_loss_improved": false,
+      "equal_league_brier_not_worse": false,
+      "no_fold_log_loss_deterioration_over_limit": false,
+      "log_loss_improved_in_league_majority": false
+    }
+  ]
+}

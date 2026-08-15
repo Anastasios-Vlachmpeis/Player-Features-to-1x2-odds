@@ -41,5 +41,14 @@
       "baseline_model": "dixon_coles",
       "enhanced_model": "dixon_coles_player_form"
     }
-  ]
+  ],
+  "calibration_method": "single-temperature scaling",
+  "calibration_training": "earlier out-of-sample prediction seasons only",
+  "calibration_scope": "pooled recalibrated market and pooled player model",
+  "calibration_decision_rule": {
+    "equal_league_log_loss_improved": true,
+    "equal_league_brier_not_worse": true,
+    "maximum_fold_log_loss_deterioration": 0.001,
+    "log_loss_improved_in_at_least_three_of_five_leagues": true
+  }
 }
