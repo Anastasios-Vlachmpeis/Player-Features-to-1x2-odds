@@ -19,6 +19,12 @@ from evaluation.multi_league import (
     run_multi_league_walk_forward,
 )
 from evaluation.report import write_multi_league_outputs
+from selected_features import (
+    SELECTED_FEATURES_PATH,
+    load_selected_features,
+    write_frozen_run_configuration,
+)
+from models.player_form_lightgbm import LIGHTGBM_SETTINGS
 from models.publication_suite import (
     PUBLICATION_MODEL_NAMES,
     league_specific_model_factories,
@@ -39,6 +45,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_EVALUATION_DIR,
         help=f"Evaluation output directory (default: {DEFAULT_EVALUATION_DIR})",
+    )
+    parser.add_argument(
+        "--selected-features",
+        type=Path,
+        default=SELECTED_FEATURES_PATH,
+        help=f"Selected model features CSV (default: {SELECTED_FEATURES_PATH})",
     )
     parser.add_argument(
         "--scope",
@@ -64,6 +76,9 @@ def resolve_project_path(path: Path) -> Path:
 
 def main() -> None:
     args = parse_args()
+    selected = load_selected_features(
+        resolve_project_path(args.selected_features)
+    )
     dataset = load_dataset(resolve_project_path(args.model_dataset))
     excluded_present = sorted(
         set(dataset["league"]).intersection(DEVELOPMENT_EXCLUDED_LEAGUES)
@@ -84,8 +99,12 @@ def main() -> None:
     pooled_factories = pooled_model_factories(
         league_effect_column_names(),
         selected_models,
+        selected_features=selected.by_model,
     )
-    separate_factories = league_specific_model_factories(selected_models)
+    separate_factories = league_specific_model_factories(
+        selected_models,
+        selected_features=selected.by_model,
+    )
     result = run_multi_league_walk_forward(
         dataset,
         pooled_factories,
@@ -94,11 +113,20 @@ def main() -> None:
     )
     output_dir = resolve_project_path(args.output_dir)
     write_multi_league_outputs(result, output_dir)
+    configuration_paths = write_frozen_run_configuration(
+        selected,
+        output_dir,
+        lightgbm_settings=LIGHTGBM_SETTINGS,
+    )
     print("\nEqual-league development results")
     print(result.equal_league_metrics.to_string(index=False))
     print("\nMatch-weighted development results")
     print(result.overall_metrics.to_string(index=False))
     print(f"\nSaved evaluation outputs to {output_dir}")
+    print(
+        "Saved configuration: "
+        + ", ".join(str(path) for path in configuration_paths.values())
+    )
 
 
 if __name__ == "__main__":

@@ -10,12 +10,12 @@ import pandas as pd
 
 from build_match_dataset import MATCH_DATASET_NAME, write_csv_atomic
 from constants import DEVELOPMENT_EXCLUDED_LEAGUES, EXPECTED_LEAGUES
-from data_contract import VALID_COMPETITION_PHASES, add_exclusion_reasons
+from match_rules import VALID_COMPETITION_PHASES, add_exclusion_reasons
 from league_config import DEVELOPMENT_SEASONS, LEAGUES, PROJECT_ROOT
 from validate_dataset import build_match_validation, load_inputs
 
 
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "artifacts" / "five_league_data_contract"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "artifacts" / "data_quality"
 PROCESSED_ROOT = PROJECT_ROOT / "data" / "processed"
 OUTCOMES = ("H", "D", "A")
 
@@ -108,7 +108,7 @@ def validate_processed_membership(validation: pd.DataFrame) -> None:
         path = PROCESSED_ROOT / league / MATCH_DATASET_NAME
         if not path.exists():
             raise FileNotFoundError(
-                f"Build the per-league match dataset before the contract report: {path}"
+                f"Build the per-league match dataset before the data-quality report: {path}"
             )
         processed = pd.read_csv(path, dtype={"match_id": "string"})
         expected = set(
@@ -119,14 +119,14 @@ def validate_processed_membership(validation: pd.DataFrame) -> None:
         observed = set(processed["match_id"].astype(str))
         if observed != expected:
             raise ValueError(
-                f"{league} processed membership disagrees with the data contract: "
+                f"{league} processed membership disagrees with the match inclusion rules: "
                 f"missing={len(expected - observed)}, unexpected={len(observed - expected)}"
             )
 
 
 def build_report(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Path]:
     if DEVELOPMENT_EXCLUDED_LEAGUES != frozenset({"greece"}):
-        raise ValueError("Development exclusions changed; review and refreeze the data contract")
+        raise ValueError("Development exclusions changed; review and refreeze the match inclusion rules")
 
     frames: list[pd.DataFrame] = []
     for league in sorted(EXPECTED_LEAGUES):

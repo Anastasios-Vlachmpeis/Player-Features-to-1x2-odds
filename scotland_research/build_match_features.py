@@ -14,7 +14,7 @@ from build_match_dataset import DEFAULT_OUTPUT_DIR, MATCH_DATASET_NAME, write_cs
 from build_player_form import PLAYER_FORM_NAME
 from build_team_strength_features import FEATURE_COLUMNS as TEAM_STRENGTH_FEATURES
 from build_team_strength_features import TEAM_STRENGTH_NAME
-from feature_req import USE_NPXG_FEATURE
+from feature_rules import USE_NPXG_FEATURE
 from validate_dataset import as_bool
 
 

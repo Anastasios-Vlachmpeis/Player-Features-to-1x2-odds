@@ -9,6 +9,23 @@ from lightgbm import LGBMClassifier
 from constants import CLASS_ORDER, PLAYER_FEATURES
 
 
+LIGHTGBM_SETTINGS = {
+    "objective": "multiclass",
+    "num_class": len(CLASS_ORDER),
+    "n_estimators": 100,
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "num_leaves": 7,
+    "min_child_samples": 30,
+    "reg_lambda": 1.0,
+    "random_state": 42,
+    "n_jobs": 1,
+    "deterministic": True,
+    "force_col_wise": True,
+    "verbosity": -1,
+}
+
+
 class PlayerFormLightGBMModel:
     # Small, deterministic nonlinear (LightGBM based) player-form model for the Scotland sample
 
@@ -26,21 +43,7 @@ class PlayerFormLightGBMModel:
         train: pd.DataFrame,
         sample_weight: np.ndarray | None = None,
     ) -> None:
-        model = LGBMClassifier(
-            objective="multiclass",
-            num_class=len(CLASS_ORDER),
-            n_estimators=100,
-            learning_rate=0.03,
-            max_depth=3,
-            num_leaves=7,
-            min_child_samples=30,
-            reg_lambda=1.0,
-            random_state=42,
-            n_jobs=1,
-            deterministic=True,
-            force_col_wise=True,
-            verbosity=-1,
-        )
+        model = LGBMClassifier(**LIGHTGBM_SETTINGS)
         model.fit(
             train[self._feature_columns],
             train["result_3way"],

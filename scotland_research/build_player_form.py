@@ -11,7 +11,7 @@ import pandas as pd
 from build_match_dataset import DEFAULT_OUTPUT_DIR, MATCH_DATASET_NAME
 from build_team_strength_features import TEAM_STRENGTH_NAME
 from validate_dataset import PLAYER_STATS_CSV, as_bool
-from feature_req import NPXG_FIELD, NPXG_MIN_VALID_APPEARANCES, NPXG_MIN_VALID_MINUTES
+from feature_rules import NPXG_FIELD, NPXG_MIN_VALID_APPEARANCES, NPXG_MIN_VALID_MINUTES
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

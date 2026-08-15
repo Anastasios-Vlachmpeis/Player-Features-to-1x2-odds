@@ -129,9 +129,9 @@ data/processed/all_leagues/final_2025_26_model_dataset.csv
 Omitting `--include-final` is a deliberate safeguard: a normal development build
 cannot contain 2025/26 rows.
 
-## Audit the five-league data contract
+## Check the five-league data quality
 
-The match builder applies one declared inclusion contract: a completed matched
+The match builder applies one declared set of match inclusion rules: a completed matched
 top-division fixture, matching scores, valid closing odds, player data, exactly
 11 starters per side, complete starter identities and minutes, and valid player
 team assignments. It also preserves `matchday` and `competition_phase`.
@@ -139,13 +139,13 @@ team assignments. It also preserves `matchday` and `competition_phase`.
 After building the five development-league match tables, run:
 
 ```powershell
-.venv\Scripts\python scotland_research\build_data_contract_report.py
+.venv\Scripts\python scotland_research\report_data_quality.py
 ```
 
-This verifies that processed membership exactly matches the contract and writes
+This verifies that processed membership exactly matches the inclusion rules and writes
 league-season coverage, phase coverage, granular exclusion reasons, and the
 included-versus-excluded closing-market comparison to
-`artifacts/five_league_data_contract`. Greece is deliberately outside this
+`artifacts/data_quality`. Greece is deliberately outside this
 development report under the existing lineup-coverage exclusion.
 
 ## Run the five-league development evaluation
@@ -155,6 +155,13 @@ With `data/processed/all_leagues/development_model_dataset.csv` already built:
 ```powershell
 .venv\Scripts\python scotland_research\evaluate_models.py
 ```
+
+The evaluator automatically loads the frozen model-specific feature lists from
+`scotland_research/config/selected_features.csv`. Pooled and league-specific
+versions receive the same selected inputs. Dixon–Coles remains league-specific
+and uses its own selected player-feature rows. Every evaluation output directory
+also receives a copy of these selected features and `model_settings.json`, including the
+fixed LightGBM settings and selected-features checksum.
 
 The default command runs both research branches:
 

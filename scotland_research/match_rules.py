@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 
-CONTRACT_CHECKS = (
+MATCH_CHECKS = (
     "completed_match",
     "football_data_match",
     "score_matches_football_data",
@@ -90,24 +90,24 @@ def add_competition_phase(frame: pd.DataFrame, league: str) -> pd.DataFrame:
     return output
 
 
-def contract_ready(frame: pd.DataFrame) -> pd.Series:
-    missing = sorted(set(CONTRACT_CHECKS).difference(frame.columns))
+def meets_match_rules(frame: pd.DataFrame) -> pd.Series:
+    missing = sorted(set(MATCH_CHECKS).difference(frame.columns))
     if missing:
-        raise ValueError(f"Cannot apply data contract; missing checks: {missing}")
-    return frame[list(CONTRACT_CHECKS)].fillna(False).astype(bool).all(axis=1)
+        raise ValueError(f"Cannot apply match inclusion rules; missing checks: {missing}")
+    return frame[list(MATCH_CHECKS)].fillna(False).astype(bool).all(axis=1)
 
 
 def add_exclusion_reasons(frame: pd.DataFrame) -> pd.DataFrame:
     """Assign one primary reason and retain every failed check for auditability."""
     output = frame.copy()
-    expected_ready = contract_ready(output)
+    expected_ready = meets_match_rules(output)
     if "model_ready" in output and not output["model_ready"].astype(bool).equals(expected_ready):
-        raise ValueError("model_ready disagrees with the declared data contract")
+        raise ValueError("model_ready disagrees with the match inclusion rules")
     output["model_ready"] = expected_ready
 
     reason_by_check = dict(EXCLUSION_PRIORITY)
-    output["failed_contract_checks"] = [
-        "|".join(check for check in CONTRACT_CHECKS if not bool(row[check]))
+    output["failed_match_checks"] = [
+        "|".join(check for check in MATCH_CHECKS if not bool(row[check]))
         for _, row in output.iterrows()
     ]
     output["exclusion_reason"] = pd.NA
@@ -118,8 +118,8 @@ def add_exclusion_reasons(frame: pd.DataFrame) -> pd.DataFrame:
     unexplained = excluded & output["exclusion_reason"].isna()
     if unexplained.any():
         raise ValueError("At least one excluded match has no declared exclusion reason")
-    if output.loc[~excluded, "failed_contract_checks"].ne("").any():
-        raise ValueError("A model-ready match failed a declared contract check")
+    if output.loc[~excluded, "failed_match_checks"].ne("").any():
+        raise ValueError("A model-ready match failed a declared inclusion check")
     if not set(output.loc[excluded, "exclusion_reason"]).issubset(set(reason_by_check.values())):
         raise ValueError("An undeclared exclusion reason was generated")
     return output

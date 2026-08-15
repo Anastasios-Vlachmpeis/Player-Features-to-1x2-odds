@@ -24,5 +24,6 @@ tests/*
 !tests/test_all_leagues_dataset.py
 !tests/test_six_league_folds.py
 !tests/test_multi_league_evaluation.py
-!tests/test_data_contract.py
+!tests/test_match_rules.py
+!tests/test_selected_features.py
 archive/

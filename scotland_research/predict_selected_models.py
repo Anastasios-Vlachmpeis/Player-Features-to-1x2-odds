@@ -11,6 +11,10 @@ from constants import DEFAULT_MODEL_DATASET, PROJECT_ROOT
 from data.load_model_dataset import load_dataset
 from evaluation.report import write_evaluation_outputs
 from evaluation.walk_forward import run_walk_forward
+from selected_features import (
+    SELECTED_FEATURES_PATH,
+    load_selected_features,
+)
 from models.closing_market import ClosingMarket
 from models.dixon_coles_player_form import DixonColesPlayerFormModel
 from models.expanded_player_form_lightgbm import ExpandedPlayerFormLightGBMModel
@@ -19,12 +23,7 @@ from models.player_form import PlayerFormModel
 from models.player_form_lightgbm import PlayerFormLightGBMModel
 
 
-DEFAULT_MANIFEST = (
-    PROJECT_ROOT
-    / "artifacts"
-    / "scotland_feature_group_selection"
-    / "selected_feature_manifest.csv"
-)
+DEFAULT_SELECTED_FEATURES = SELECTED_FEATURES_PATH
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "artifacts" / "scotland_selected_model_evaluation"
 
 MODEL_ORDER = [
@@ -39,7 +38,11 @@ MODEL_ORDER = [
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model-dataset", type=Path, default=DEFAULT_MODEL_DATASET)
-    parser.add_argument("--feature-manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument(
+        "--selected-features",
+        type=Path,
+        default=DEFAULT_SELECTED_FEATURES,
+    )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     return parser.parse_args()
 
@@ -49,35 +52,8 @@ def resolve_project_path(path: Path) -> Path:
 
 
 def load_selected_feature_map(path: Path) -> dict[str, list[str]]:
-    if not path.exists():
-        raise FileNotFoundError(f"Selected-feature manifest does not exist: {path}")
-
-    manifest = pd.read_csv(path)
-    required_columns = {"model", "feature"}
-    missing_columns = sorted(required_columns.difference(manifest.columns))
-    if missing_columns:
-        raise ValueError(f"Feature manifest is missing columns: {missing_columns}")
-    if manifest.empty:
-        raise ValueError("Feature manifest is empty")
-    if manifest[list(required_columns)].isna().any().any():
-        raise ValueError("Feature manifest contains missing model or feature names")
-    if manifest.duplicated(["model", "feature"]).any():
-        raise ValueError("Feature manifest contains duplicate model-feature rows")
-
-    observed_models = set(manifest["model"])
-    expected_models = set(MODEL_ORDER)
-    missing_models = sorted(expected_models.difference(observed_models))
-    unexpected_models = sorted(observed_models.difference(expected_models))
-    if missing_models or unexpected_models:
-        raise ValueError(
-            "Feature manifest model mismatch: "
-            f"missing={missing_models}, unexpected={unexpected_models}"
-        )
-
-    return {
-        model_name: manifest.loc[manifest["model"].eq(model_name), "feature"].tolist()
-        for model_name in MODEL_ORDER
-    }
+    selected = load_selected_features(path)
+    return {model_name: selected.by_model[model_name] for model_name in MODEL_ORDER}
 
 
 def diff_columns(base_features: list[str]) -> list[str]:
@@ -143,11 +119,11 @@ def validate_selected_columns(
 def main() -> None:
     args = parse_args()
     dataset_path = resolve_project_path(args.model_dataset)
-    manifest_path = resolve_project_path(args.feature_manifest)
+    selected_features_path = resolve_project_path(args.selected_features)
     output_dir = resolve_project_path(args.output_dir)
 
     dataset = load_dataset(dataset_path)
-    feature_map = load_selected_feature_map(manifest_path)
+    feature_map = load_selected_feature_map(selected_features_path)
     validate_selected_columns(dataset, feature_map)
 
     # Market comparison reporting requires one closing-market prediction per match.

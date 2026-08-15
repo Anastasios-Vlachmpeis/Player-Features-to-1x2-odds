@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from data_contract import add_competition_phase, contract_ready
-from feature_req import NPXG_FIELD, NPXG_MAX_SEASON_COVERAGE_DROP, NPXG_MIN_PLAYER_COVERAGE, USE_NPXG_FEATURE
+from feature_rules import NPXG_FIELD, NPXG_MAX_SEASON_COVERAGE_DROP, NPXG_MIN_PLAYER_COVERAGE, USE_NPXG_FEATURE
+from match_rules import add_competition_phase, meets_match_rules
 from league_config import (
     ALL_RESEARCH_SEASONS,
     DEVELOPMENT_SEASONS,
@@ -315,7 +315,7 @@ def build_match_validation(
         valid_team_ids[match_id] = bool(observed) and observed.issubset(expected)
     report["player_team_ids_valid"] = report["match_id"].map(valid_team_ids).fillna(False)
 
-    report["model_ready"] = contract_ready(report)
+    report["model_ready"] = meets_match_rules(report)
 
     output_columns = [
         "season",
@@ -491,7 +491,7 @@ def validate_npxg_coverage(
 
     if low_coverage.empty and collapsed.empty: return
     
-    message = f"npxG coverage contract failed; low_coverage={low_coverage.to_dict()}, collapses={collapsed.to_dict()}"
+    message = f"npxG coverage rule failed; low_coverage={low_coverage.to_dict()}, collapses={collapsed.to_dict()}"
     
     if USE_NPXG_FEATURE: raise ValueError(message)
     

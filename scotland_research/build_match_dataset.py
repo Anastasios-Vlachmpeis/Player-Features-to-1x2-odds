@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from data_contract import add_exclusion_reasons
+from match_rules import add_exclusion_reasons
 from league_config import (
     ALL_RESEARCH_SEASONS,
     DEVELOPMENT_SEASONS,
@@ -161,7 +161,7 @@ def build_outputs(
         "starter_identity_complete",
         "starter_minutes_complete",
         "player_team_ids_valid",
-        "failed_contract_checks",
+        "failed_match_checks",
         "exclusion_reason",
         "excluded_from_prediction_targets",
         "retained_for_player_history",

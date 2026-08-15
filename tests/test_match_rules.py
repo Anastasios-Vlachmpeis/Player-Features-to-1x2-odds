@@ -12,19 +12,19 @@ if str(SCOTLAND_RESEARCH_DIR) not in sys.path:
     sys.path.insert(0, str(SCOTLAND_RESEARCH_DIR))
 
 from constants import DEVELOPMENT_EXCLUDED_LEAGUES, EXPECTED_LEAGUES  # noqa: E402
-from data_contract import (  # noqa: E402
-    CONTRACT_CHECKS,
+from match_rules import (  # noqa: E402
+    MATCH_CHECKS,
     VALID_COMPETITION_PHASES,
     add_exclusion_reasons,
     competition_phase,
-    contract_ready,
+    meets_match_rules,
 )
 
 
-def contract_frame(**failures: bool) -> pd.DataFrame:
-    values = {check: True for check in CONTRACT_CHECKS}
+def match_rule_frame(**failures: bool) -> pd.DataFrame:
+    values = {check: True for check in MATCH_CHECKS}
     values.update(failures)
-    values["model_ready"] = all(values[check] for check in CONTRACT_CHECKS)
+    values["model_ready"] = all(values[check] for check in MATCH_CHECKS)
     return pd.DataFrame([values])
 
 
@@ -53,14 +53,14 @@ def test_invalid_matchday_is_rejected():
         competition_phase("scotland", "2024-25", None)
 
 
-def test_every_ready_match_passes_every_contract_check():
-    frame = contract_frame()
-    assert contract_ready(frame).all()
-    assert frame.loc[frame["model_ready"], list(CONTRACT_CHECKS)].all(axis=None)
+def test_every_ready_match_passes_every_inclusion_check():
+    frame = match_rule_frame()
+    assert meets_match_rules(frame).all()
+    assert frame.loc[frame["model_ready"], list(MATCH_CHECKS)].all(axis=None)
 
 
 def test_excluded_match_gets_one_primary_reason_and_all_failed_checks():
-    frame = contract_frame(
+    frame = match_rule_frame(
         closing_odds_available=False,
         twenty_two_starters=False,
         starter_minutes_complete=False,
@@ -69,7 +69,7 @@ def test_excluded_match_gets_one_primary_reason_and_all_failed_checks():
 
     assert not output.loc[0, "model_ready"]
     assert output.loc[0, "exclusion_reason"] == "missing_closing_odds"
-    assert output.loc[0, "failed_contract_checks"] == (
+    assert output.loc[0, "failed_match_checks"] == (
         "closing_odds_available|twenty_two_starters|starter_minutes_complete"
     )
 
@@ -87,11 +87,11 @@ def test_excluded_match_gets_one_primary_reason_and_all_failed_checks():
     ],
 )
 def test_granular_exclusion_reasons(failed_check, expected_reason):
-    output = add_exclusion_reasons(contract_frame(**{failed_check: False}))
+    output = add_exclusion_reasons(match_rule_frame(**{failed_check: False}))
     assert output.loc[0, "exclusion_reason"] == expected_reason
 
 
-def test_greece_is_explicitly_outside_the_five_league_contract():
+def test_greece_is_explicitly_outside_the_five_league_rules():
     assert DEVELOPMENT_EXCLUDED_LEAGUES == frozenset({"greece"})
     assert EXPECTED_LEAGUES == {
         "scotland",
