@@ -1,0 +1,5 @@
+comparison,priority,training_scope,baseline_model,enhanced_model,matches,leagues,seasons,league_season_weeks
+Pooled players versus recalibrated market,primary,pooled,recalibrated_market,market_plus_player_form,3895,5,3,524
+Pooled recalibration versus raw market,secondary,pooled,closing_market,recalibrated_market,3895,5,3,524
+Separate players versus recalibrated market,secondary,league_specific,recalibrated_market,market_plus_player_form,3895,5,3,524
+Dixon-Coles with players versus plain Dixon-Coles,secondary,league_specific,dixon_coles,dixon_coles_player_form,3895,5,3,524

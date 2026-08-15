@@ -1,0 +1,45 @@
+{
+  "development_only": true,
+  "prediction_source": "C:\\Users\\skous\\Super-League-odds-research\\artifacts\\five_league_development_evaluation\\predictions.csv",
+  "selected_features_sha256": "2f3f3a757a26bcd3df93eb798ae8dd8135d82bb40ab4c695a39f0846c4655df4",
+  "repetitions": 10000,
+  "base_seed": 42,
+  "resampling_unit": "match week within league and season",
+  "primary_weighting": "equal league",
+  "secondary_weighting": "match weighted",
+  "primary_metric": "log loss",
+  "secondary_metrics": [
+    "Brier score",
+    "normalized RPS"
+  ],
+  "comparisons": [
+    {
+      "comparison": "Pooled players versus recalibrated market",
+      "priority": "primary",
+      "training_scope": "pooled",
+      "baseline_model": "recalibrated_market",
+      "enhanced_model": "market_plus_player_form"
+    },
+    {
+      "comparison": "Pooled recalibration versus raw market",
+      "priority": "secondary",
+      "training_scope": "pooled",
+      "baseline_model": "closing_market",
+      "enhanced_model": "recalibrated_market"
+    },
+    {
+      "comparison": "Separate players versus recalibrated market",
+      "priority": "secondary",
+      "training_scope": "league_specific",
+      "baseline_model": "recalibrated_market",
+      "enhanced_model": "market_plus_player_form"
+    },
+    {
+      "comparison": "Dixon-Coles with players versus plain Dixon-Coles",
+      "priority": "secondary",
+      "training_scope": "league_specific",
+      "baseline_model": "dixon_coles",
+      "enhanced_model": "dixon_coles_player_form"
+    }
+  ]
+}
