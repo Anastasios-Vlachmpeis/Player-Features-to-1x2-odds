@@ -1,8 +1,10 @@
 # Medium-Large European Leagues player-form odds research
 
-Research project testing whether recent player-level performance improves 1X2 predictions in Belgium, the Netherlands, Portugal, Scotland, and Turkey, either on its own or when added to bookmaker closing probabilities. Greece is built and audited but excluded from model development under the predeclared lineup-coverage rule.
+## Research question
 
-The active work is a leakage-safe, walk-forward comparison across the 2020/21 to 2024/25 development seasons. The untouched 2025/26 season is reserved for the final examination. The main question is whether information from the announced starters' previous appearances adds predictive value beyond the closing market.
+Does the recent recorded performance of the announced starting players improve 1X2 match predictions beyond bookmaker closing odds? Here, recent performance means information from each starter's previous five appearances before the match.
+
+The question is tested in Belgium, the Netherlands, Portugal, Scotland, and Turkey. Greece is built and audited but excluded from model development under the predeclared lineup-coverage rule. The active work uses walk-forward comparisons across the 2020/21 to 2024/25 development seasons. The untouched 2025/26 season is reserved for the final examination.
 
 ## Current experiment
 
