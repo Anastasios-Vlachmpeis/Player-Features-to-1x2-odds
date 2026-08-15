@@ -17,7 +17,7 @@ SELECTED_FEATURES_PATH = (
     PROJECT_ROOT / "scotland_research" / "config" / "selected_features.csv"
 )
 SELECTED_FEATURES_SHA256 = (
-    "ff05cfb23b81485d47c12c5b8e216f2ce5bfb1a52ef1dd5a18137ed251039a99"
+    "2f3f3a757a26bcd3df93eb798ae8dd8135d82bb40ab4c695a39f0846c4655df4"
 )
 FEATURE_MODELS = (
     "player_form_logistic",
@@ -28,7 +28,7 @@ FEATURE_MODELS = (
 )
 EXPECTED_FEATURE_COUNTS = {
     "player_form_logistic": 8,
-    "market_plus_player_form": 5,
+    "market_plus_player_form": 4,
     "player_form_lightgbm": 19,
     "expanded_player_form_lightgbm": 10,
     "dixon_coles_player_form": 7,

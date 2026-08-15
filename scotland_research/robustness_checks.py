@@ -21,7 +21,6 @@ FEATURE_BLOCKS: dict[str, tuple[str, ...]] = {
         "shots_per90_sum_5",
     ),
     "defensive_output": ("defensive_actions_per90_sum_5",),
-    "player_ratings": ("rating_mean_5",),
     "team_strength_context": ("expected_goals_strength",),
 }
 
@@ -206,7 +205,6 @@ def build_primary_summary(
             "market_plus_player_form": "final pooled model",
             "without_attacking_output": "positive change means attacking block helped",
             "without_defensive_output": "positive change means defensive block helped",
-            "without_player_ratings": "positive change means ratings block helped",
             "without_team_strength_context": "positive change means team context helped",
             "shuffled_player_features": "positive change means real player ordering helped",
             "deliberate_hindsight_model": "invalid; improvement demonstrates hindsight leakage",

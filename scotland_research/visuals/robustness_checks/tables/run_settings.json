@@ -1,0 +1,42 @@
+{
+  "training_scope": "pooled only",
+  "development_only": true,
+  "shuffle_seed": 42,
+  "shuffle_groups": [
+    "league",
+    "season"
+  ],
+  "shuffled_features": [
+    "key_passes_per90_sum_5",
+    "shots_per90_sum_5",
+    "defensive_actions_per90_sum_5",
+    "rating_mean_5"
+  ],
+  "feature_blocks": {
+    "attacking_output": [
+      "key_passes_per90_sum_5",
+      "shots_per90_sum_5"
+    ],
+    "defensive_output": [
+      "defensive_actions_per90_sum_5"
+    ],
+    "player_ratings": [
+      "rating_mean_5"
+    ],
+    "team_strength_context": [
+      "expected_goals_strength"
+    ]
+  },
+  "selected_features": [
+    "key_passes_per90_sum_5",
+    "shots_per90_sum_5",
+    "defensive_actions_per90_sum_5",
+    "rating_mean_5",
+    "expected_goals_strength"
+  ],
+  "hindsight_feature": "hindsight_final_points_difference",
+  "hindsight_warning": "Deliberately invalid complete-season result information; never use in rankings.",
+  "selected_features_sha256": "ff05cfb23b81485d47c12c5b8e216f2ce5bfb1a52ef1dd5a18137ed251039a99",
+  "main_results_directory": "C:\\Users\\skous\\Super-League-odds-research\\artifacts\\five_league_development_evaluation",
+  "model_dataset": "C:\\Users\\skous\\Super-League-odds-research\\data\\processed\\all_leagues\\development_model_dataset.csv"
+}
