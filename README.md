@@ -127,6 +127,25 @@ data/processed/all_leagues/final_2025_26_model_dataset.csv
 Omitting `--include-final` is a deliberate safeguard: a normal development build
 cannot contain 2025/26 rows.
 
+## Audit the five-league data contract
+
+The match builder applies one declared inclusion contract: a completed matched
+top-division fixture, matching scores, valid closing odds, player data, exactly
+11 starters per side, complete starter identities and minutes, and valid player
+team assignments. It also preserves `matchday` and `competition_phase`.
+
+After building the five development-league match tables, run:
+
+```powershell
+.venv\Scripts\python scotland_research\build_data_contract_report.py
+```
+
+This verifies that processed membership exactly matches the contract and writes
+league-season coverage, phase coverage, granular exclusion reasons, and the
+included-versus-excluded closing-market comparison to
+`artifacts/five_league_data_contract`. Greece is deliberately outside this
+development report under the existing lineup-coverage exclusion.
+
 ## Run the five-league development evaluation
 
 With `data/processed/all_leagues/development_model_dataset.csv` already built:

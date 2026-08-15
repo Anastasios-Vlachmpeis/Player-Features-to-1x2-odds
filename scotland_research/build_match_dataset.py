@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from data_contract import add_exclusion_reasons
 from league_config import (
     ALL_RESEARCH_SEASONS,
     DEVELOPMENT_SEASONS,
@@ -26,6 +27,8 @@ MATCH_COLUMNS = [
     "season",
     "match_date",
     "utc_date",
+    "matchday",
+    "competition_phase",
     "home_team_id",
     "home_team",
     "away_team_id",
@@ -135,26 +138,30 @@ def build_outputs(
     dataset = dataset[MATCH_COLUMNS].sort_values(["utc_date", "match_id"]).reset_index(drop=True)
     validate_output(dataset)
 
+    validation = add_exclusion_reasons(validation)
     exclusions = validation[~validation["model_ready"]].copy()
-    # Record the first failed contract so exclusions remain auditable rather than
-    # silently disappearing between validation and feature construction.
-    exclusions["exclusion_reason"] = "other_validation_failure"
-    exclusions.loc[~exclusions["football_data_match"], "exclusion_reason"] = "not_top_division_match"
-    exclusions.loc[exclusions["football_data_match"] & ~exclusions["twenty_two_starters"], "exclusion_reason"] = "invalid_starter_count"
-    exclusions.loc[exclusions["football_data_match"] & ~exclusions["closing_odds_available"], "exclusion_reason"] = "missing_closing_odds"
-    exclusions.loc[exclusions["football_data_match"] & ~exclusions["score_matches_football_data"], "exclusion_reason"] = "score_disagreement"
     exclusions["excluded_from_prediction_targets"] = True
     exclusions["retained_for_player_history"] = exclusions["player_data_available"]
     exclusion_columns = [
         "match_id",
         "season",
         "match_date",
+        "matchday",
+        "competition_phase",
         "home_team",
         "away_team",
+        "completed_match",
         "football_data_match",
+        "closing_odds_available",
+        "score_matches_football_data",
         "player_data_available",
         "home_starters",
         "away_starters",
+        "twenty_two_starters",
+        "starter_identity_complete",
+        "starter_minutes_complete",
+        "player_team_ids_valid",
+        "failed_contract_checks",
         "exclusion_reason",
         "excluded_from_prediction_targets",
         "retained_for_player_history",

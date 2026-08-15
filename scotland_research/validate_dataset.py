@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from data_contract import add_competition_phase, contract_ready
 from feature_req import NPXG_FIELD, NPXG_MAX_SEASON_COVERAGE_DROP, NPXG_MIN_PLAYER_COVERAGE, USE_NPXG_FEATURE
 from league_config import (
     ALL_RESEARCH_SEASONS,
@@ -46,6 +47,9 @@ MATCH_REQUIRED_COLUMNS = {
     "match_id",
     "season",
     "utc_date",
+    "status",
+    "matchday",
+    "stage_name",
     "home_team_id",
     "home_team",
     "away_team_id",
@@ -231,10 +235,13 @@ def build_match_validation(
         how="left",
         validate="one_to_one",
     )
+    report = add_competition_phase(report, config.key)
+    report["completed_match"] = report["status"].astype("string").str.lower().eq("finished")
     report["football_data_match"] = report["result_3way"].notna()
     report["closing_odds_available"] = (
         report["odds_is_closing"].fillna(0).astype(bool)
         & report[["home_odds", "draw_odds", "away_odds"]].notna().all(axis=1)
+        & report[["home_odds", "draw_odds", "away_odds"]].gt(1.0).all(axis=1)
     )
     report["score_matches_football_data"] = (
         report["football_data_match"]
@@ -308,22 +315,17 @@ def build_match_validation(
         valid_team_ids[match_id] = bool(observed) and observed.issubset(expected)
     report["player_team_ids_valid"] = report["match_id"].map(valid_team_ids).fillna(False)
 
-    report["model_ready"] = (
-        report["football_data_match"]
-        & report["closing_odds_available"]
-        & report["score_matches_football_data"]
-        & report["player_data_available"]
-        & report["twenty_two_starters"]
-        & report["starter_identity_complete"]
-        & report["starter_minutes_complete"]
-        & report["player_team_ids_valid"]
-    )
+    report["model_ready"] = contract_ready(report)
 
     output_columns = [
         "season",
         "match_id",
         "match_date",
         "utc_date",
+        "status",
+        "matchday",
+        "stage_name",
+        "competition_phase",
         "home_team_id",
         "home_team",
         "away_team_id",
@@ -334,6 +336,7 @@ def build_match_validation(
         "home_odds",
         "draw_odds",
         "away_odds",
+        "completed_match",
         "football_data_match",
         "closing_odds_available",
         "score_matches_football_data",
