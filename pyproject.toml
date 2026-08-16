@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "superleague-baseline"
+name = "player-information-football-prediction"
 version = "0.1.0"
-description = "Leakage-safe historical match features and calibrated 1X2 baselines for Greek Super League research"
+description = "Multi-league research on whether recent starting-player performance improves 1X2 forecasts beyond closing bookmaker odds"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -14,7 +14,6 @@ dependencies = [
     "scikit-learn>=1.5",
     "scipy>=1.13",
     "lightgbm>=4.5",
-    "joblib>=1.4",
     "matplotlib>=3.9",
     "requests>=2.32.0",
 ]
@@ -22,15 +21,8 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest>=8.0"]
 
-[project.scripts]
-superleague-baseline = "superleague_baseline.cli:main"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["superleague_baseline*"]
+[tool.setuptools]
+py-modules = []
 
 [tool.pytest.ini_options]
-markers = [
-    "integration: tests against live player_stats.db",
-]
 testpaths = ["tests"]
