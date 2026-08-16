@@ -1,0 +1,15 @@
+{
+  "development_seasons": [
+    "2020-21",
+    "2021-22",
+    "2022-23",
+    "2023-24",
+    "2024-25"
+  ],
+  "floating_steps": 6,
+  "market_plus_player_adjustment": "rating_mean_5 removed after the predeclared major-block robustness check improved log loss in every development fold",
+  "pooled_source": "multi_league_research/visuals/pooled_feature_selection/tables/selected_features.csv",
+  "dixon_coles_source": "multi_league_research/visuals/dixon_coles_feature_selection/tables/selected_features.csv",
+  "refinement_starts": 2,
+  "note": "Pooled-compatible models use the five-league 2/6 selection followed by the documented block-level robustness decision above. Dixon-Coles uses its completed five-league development selection but is fitted separately inside each league."
+}
