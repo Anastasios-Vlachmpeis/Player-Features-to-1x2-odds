@@ -125,16 +125,9 @@ The final evaluator verifies the fixed settings, selected-feature checksum,
 training and test seasons, and output location before fitting. It refuses to
 silently overwrite an existing final evaluation.
 
-## Publication figures
+## Writeup (Pending arXiv publication)
 
-Saved results can be converted into the manuscript figures without refitting
-models:
-
-```powershell
-.venv\Scripts\python multi_league_research\visuals\scripts\paper_figures.py
-```
-
-The LaTeX manuscript is in `artifacts/paper`.
+The LaTex manuscript explaining the research is stored as `writeup.pdf` in the repository's root.
 
 ## Leakage safeguards
 

@@ -130,40 +130,30 @@ def add_arrow(axis: plt.Axes, start: tuple[float, float], end: tuple[float, floa
 
 
 def prediction_pipeline(output_dir: Path) -> list[Path]:
-    fig, axis = plt.subplots(figsize=(11.5, 3.8), constrained_layout=True)
+    fig, axis = plt.subplots(figsize=(12.5, 2.8), constrained_layout=True)
     axis.set_xlim(0, 1)
     axis.set_ylim(0, 1)
     axis.axis("off")
 
     boxes = [
-        (0.01, 0.13, "Earlier matches", "lightgray"),
-        (0.16, 0.16, "Chronological player\nand team histories", "lightblue"),
-        (0.35, 0.14, "Identified starting\nline-ups", "lightblue"),
-        (0.52, 0.16, "Line-up features and\nclosing probabilities", "lightgreen"),
+        (0.02, 0.10, "Earlier\nmatches", "lightgray"),
+        (0.18, 0.14, "Prior player and\nteam histories", "lightblue"),
+        (0.39, 0.11, "Starting\nline-ups", "lightblue"),
+        (0.57, 0.13, "Line-up features and\nclosing probabilities", "lightgreen"),
     ]
-    height, y = 0.28, 0.56
+    height, y = 0.22, 0.39
     for x, width, label, colour in boxes:
         add_box(axis, x, y, width, height, label, colour)
     for left, right in zip(boxes[:-1], boxes[1:], strict=True):
         add_arrow(axis, (left[0] + left[1], y + height / 2), (right[0], y + height / 2))
 
-    add_box(axis, 0.72, 0.68, 0.13, 0.20, "Recalibrated\nmarket model", "wheat")
-    add_box(axis, 0.72, 0.38, 0.13, 0.20, "Enhanced market\nmodel", "lightgreen")
-    add_arrow(axis, (0.68, y + height / 2), (0.72, 0.78))
-    add_arrow(axis, (0.68, y + height / 2), (0.72, 0.48))
-    add_box(axis, 0.89, 0.53, 0.10, 0.20, "1X2\nprobabilities", "lightskyblue")
-    add_arrow(axis, (0.85, 0.78), (0.89, 0.66))
-    add_arrow(axis, (0.85, 0.48), (0.89, 0.60))
-
-    axis.text(
-        0.02,
-        0.18,
-        "Every feature for a match was calculated from information available before that match.",
-        ha="left",
-        va="center",
-        fontsize=11,
-    )
-    axis.set_title("Chronological prediction pipeline", pad=8)
+    add_box(axis, 0.76, 0.65, 0.11, 0.20, "Recalibrated\nmarket model", "wheat")
+    add_box(axis, 0.76, 0.15, 0.11, 0.20, "Enhanced\nmarket model", "lightgreen")
+    add_arrow(axis, (0.70, 0.56), (0.76, 0.75))
+    add_arrow(axis, (0.70, 0.44), (0.76, 0.25))
+    add_box(axis, 0.92, 0.39, 0.07, 0.22, "1X2\nprobabilities", "lightskyblue")
+    add_arrow(axis, (0.87, 0.75), (0.92, 0.56))
+    add_arrow(axis, (0.87, 0.25), (0.92, 0.44))
     return save_figure(fig, output_dir, "prediction_pipeline")
 
 
